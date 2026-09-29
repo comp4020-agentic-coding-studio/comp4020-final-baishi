@@ -1,9 +1,61 @@
-# Your app
+# The Scroll
 
-<!-- TEMPLATE: this file is yours, and the deployed app publishes it in full at
-     /readme/, where visitors and markers read it. The final project brief says
-     what it covers. Replace everything in it, this comment included. -->
+A shared ink drawing that only ever grows. Visit, and there's a blank strip
+waiting at the right-hand edge of whatever everyone before you has drawn.
+Leave one mark there — a line, a dot, whatever the brush does under your
+hand — and it's part of the scroll from then on. Nobody can undo it,
+including you.
 
-Images are committed to the repo and linked relatively ---
-`![alt](docs/before.png)` --- so they render on GitHub; making them resolve at
-`/readme/` too is your app's job.
+## What good means here
+
+Good, for this app, means **small on purpose**. Not small because it isn't
+finished yet, but small as the actual design: one shared surface, one mark
+per visit, nothing that scales past what a single SQLite file and a single
+small machine can hold. Three things I read while deciding what that should
+look like:
+
+- Robin Sloan's
+  [_An app can be a home-cooked meal_](https://www.robinsloan.com/notes/home-cooked-app/)
+  argues that software built for a small, specific, known use doesn't need
+  the affordances — accounts, growth, retention — that software built to
+  scale needs. The Scroll has no login and no notion of "your" marks once
+  they're made, because nothing here is trying to bring you back for a
+  streak.
+- Ben Hoyt's [_The small web is beautiful_](https://benhoyt.com/writings/the-small-web-is-beautiful/)
+  argues for fewer moving parts as a virtue in itself, not just a
+  constraint: one table, one process, one file on one volume. There's no
+  queue, no cache, no second service.
+- Hundred Rabbits'
+  [description of their own practice](https://sourcehut.org/blog/2021-12-08-100-rabbits-interview/) —
+  "if we can use less technology to solve any one task, we will" — is the
+  standard I held the drawing itself to: one SVG path per mark, one write,
+  no client-side framework.
+
+What's **enforced**: a mark, once saved, is never edited or deleted (there
+is no code path that can — see `CLAUDE.md`); every write is validated
+server-side regardless of what the client sends (`spec/scroll.test.ts`);
+the page that shows the scroll works without JavaScript, since drawing is
+the only part that genuinely needs a pointer.
+
+What's **judged, not enforced**: nothing stops a visitor from reloading and
+drawing a second mark, or a tenth. That's deliberate, not an oversight —
+enforcing "one mark per person" needs a real notion of a person, which is
+next crit's job (multi-user identity, [All at once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
+For now the scroll trusts you the way a paper one would: nothing physically
+stops a visitor from picking up the brush twice, and the honesty of not
+doing so is part of what the piece is asking of you.
+
+What I deliberately **didn't build**: accounts, undo, a gallery of past
+scrolls, likes or any other count of a mark's popularity, moderation
+tooling. Ink-wash painting tolerates the mark that goes wrong — the
+brief's own reading list points at the "small web" and "tools for one
+workshop," not a moderated platform, and a scroll that lets you take back
+a bad stroke stops being a record of what actually happened.
+
+## What's here now
+
+This crit ships the core interaction only: one growing SVG scroll, one
+`strokes` table, one write path. It's a single visitor's experience end to
+end — draw, reload, find your mark still there — not yet the shared,
+live-updating one several people in the room at once will get. That's next
+crit's work, and this README will say more once it exists.
