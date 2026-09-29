@@ -1,18 +1,30 @@
 # syntax = docker/dockerfile:1
 
-# A placeholder, and yours to replace: it serves one page, plus README.md
-# verbatim at /readme/, which is enough to prove the deploy path end to end.
-# Whatever your app is built with, the image that replaces this one must serve
-# HTTP on 0.0.0.0:$PORT (fly.toml sets PORT) and publish README.md at /readme/
-# (spec/README.md says what's checked).
+# Node version pinned to match mise.toml. better-sqlite3 needs a native
+# build; build-essential/python3 are the fallback for when no prebuilt
+# binary matches this exact node/arch (prebuild-install tries that first).
+FROM node:24.21.0-slim AS base
+RUN corepack enable
+WORKDIR /app
 
-FROM docker.io/library/busybox:1.38.0
-COPY placeholder/ /src/
-COPY README.md /src/
-# README.md goes into the page as-is, HTML-escaped, in place of @README@;
-# rendering it properly is your app's job
-RUN mkdir -p /site/readme \
-    && cp /src/index.html /site/ \
-    && sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' /src/README.md > /src/body \
-    && sed -e '/@README@/{r /src/body' -e 'd}' /src/readme.html > /site/readme/index.html
-CMD ["sh", "-c", "exec httpd -f -p 0.0.0.0:${PORT:-8080} -h /site"]
+FROM base AS build
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+
+FROM base AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+COPY --from=build /app/dist ./dist
+COPY README.md ./README.md
+
+ENV HOST=0.0.0.0
+ENV DB_PATH=/data/scroll.db
+EXPOSE 8080
+CMD ["node", "./dist/server/entry.mjs"]

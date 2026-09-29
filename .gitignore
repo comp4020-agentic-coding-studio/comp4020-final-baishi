@@ -1,6 +1,10 @@
 node_modules/
 dist/
 *.log
+.astro/
+
+# local SQLite file used outside the Fly volume (dev, and CI's own container)
+.data/
 
 # editor and OS junk
 .DS_Store
