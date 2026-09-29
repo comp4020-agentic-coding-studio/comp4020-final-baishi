@@ -43,6 +43,19 @@ it("rejects a mark with no path, and one with an out-of-range width", async () =
   expect(tooWide.status).toBe(400);
 });
 
+it("normalises a bare tap (a moveto with no drawing command) into a paintable mark", async () => {
+  // SVG renders nothing for "M x y" alone — a stray client that sent one
+  // shouldn't get to save an invisible mark. See src/lib/db.ts.
+  const res = await fetch(new URL("/api/strokes", baseUrl), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ d: "M 42 42", width: 14 }),
+  });
+  expect(res.status).toBe(201);
+  const saved = await res.json();
+  expect(saved.d).toMatch(/L/);
+});
+
 it("never deletes: nothing in the app exposes a way to remove a mark", async () => {
   const res = await fetch(new URL("/api/strokes", baseUrl), { method: "DELETE" });
   // No route handles DELETE (Astro's same-origin check rejects it with 403

@@ -44,8 +44,16 @@ export function getAllStrokes(): Stroke[] {
   return selectAllStmt.all() as Stroke[];
 }
 
+// A bare "M x y" has no paintable geometry in SVG — a browser silently
+// renders nothing for it. draw.ts already avoids emitting one, but the data
+// layer is the one place this promise (every saved mark is visible) can
+// actually be held regardless of what any future client sends.
+const BARE_MOVETO = /^M\s+([+-]?[\d.]+)\s+([+-]?[\d.]+)\s*$/;
+
 export function addStroke(d: string, width: number): Stroke {
+  const bare = d.match(BARE_MOVETO);
+  const safeD = bare ? `${d} L ${bare[1]} ${bare[2]}` : d;
   const createdAt = Date.now();
-  const info = insertStmt.run(d, width, createdAt);
-  return { id: Number(info.lastInsertRowid), d, width, createdAt };
+  const info = insertStmt.run(safeD, width, createdAt);
+  return { id: Number(info.lastInsertRowid), d: safeD, width, createdAt };
 }
