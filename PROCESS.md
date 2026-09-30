@@ -143,6 +143,40 @@ drawing zone shifts by exactly one segment per mark, the total width
 grows to match, and the "N marks so far, since &lt;date&gt;" line keeps
 citing the *first* mark's date as more accumulate, not the latest one.
 
+## A fourth pass: checking the fix against the rest of the file, not just itself
+
+A fourth run tried the third run's own flagged candidate — a clause-by-clause
+re-read of `README.md`/`CLAUDE.md` against the current code — and it paid off
+immediately, in a place none of the three prior passes had looked: the second
+run's own contrast fix
+([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac))
+introduced a dedicated `--link` color specifically because `--accent` alone is
+4.30:1 against the page background — under the 4.5:1 AA floor — and used it on
+`.tagline a`. It never checked `readme.astro`'s own link style, which still
+used `--accent` directly. Every hyperlink rendered from `README.md` on
+`/readme/` — the three sources cited under "What good means here," the
+crit-9 link — was under the AA floor the whole time, on the one page the crit
+calls its "real material." Fixed in
+[`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a),
+along with the same file's `blockquote` rule, which still used `opacity`
+rather than a direct color — the exact anti-pattern `874ccac` rewrote
+`.tagline` to avoid, dormant only because `README.md` has no blockquote yet.
+Confirmed live: the computed link color now reads `rgb(117, 76, 44)`
+(`--link`), and a fresh axe-core sweep of both pages still shows zero
+violations.
+
+That run also ran the other flagged candidate — a full keyboard-only
+draw-then-reload walkthrough, not the keydown-persists check the second run
+already did — against the exact CI container (`docker build` +
+`docker run --tmpfs /data`, matching `.github/workflows/checks.yml`): a real
+`agent-browser` Tab walk reached the "What this is, and why" link, then the
+drawing zone (`rect#zone-hit`, `role="button"`), a real `Enter` press left a
+mark, and a completely fresh navigation (not just the client's own
+`location.reload()`) showed the mark still there — the crit's actual "a
+stranger... finds their trace still there when they come back" bar, walked
+end to end via keyboard alone. `pnpm check` green (6/6) against that
+container throughout. Redeployed and reverified the live contrast fix.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
