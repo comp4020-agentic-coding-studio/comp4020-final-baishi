@@ -23,7 +23,9 @@ in either.
 
 - The page that shows the scroll (`/`) must render the existing marks and
   answer 200 with JavaScript disabled. Only the act of drawing needs a
-  pointer and a script.
+  script — and within that, a pointer is never the only way in: the
+  drawing zone is a real focusable control, not just a hit-tested shape,
+  so Enter/Space works wherever a pointer does.
 - `/readme/` always serves the current `README.md` in full, headings
   intact — `spec/invariants.test.ts` checks this; don't special-case it
   away.

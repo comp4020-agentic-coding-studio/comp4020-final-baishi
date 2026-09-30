@@ -44,7 +44,6 @@ const since =
           viewBox={`0 0 ${width} ${HEIGHT}`}
           width={width}
           height={HEIGHT}
-          role="img"
           aria-label={`A shared ink scroll of ${count} mark${count === 1 ? "" : "s"} left so far, with a blank space at the end for yours`}
         >
           <rect x="0" y="0" width={width} height={HEIGHT} class="paper" />
@@ -77,6 +76,9 @@ const since =
             width={SEGMENT}
             height={HEIGHT}
             class="zone-hit"
+            tabindex="0"
+            role="button"
+            aria-label="Draw your mark here: drag with a pointer, or press Enter or Space to leave a dot"
           />
         </svg>
       </div>

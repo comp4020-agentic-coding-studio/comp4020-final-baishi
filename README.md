@@ -35,7 +35,10 @@ What's **enforced**: a mark, once saved, is never edited or deleted (there
 is no code path that can — see `CLAUDE.md`); every write is validated
 server-side regardless of what the client sends (`spec/scroll.test.ts`);
 the page that shows the scroll works without JavaScript, since drawing is
-the only part that genuinely needs a pointer.
+the only part that genuinely needs a script; and drawing itself doesn't
+require a pointer — the zone is a real focusable control, and Enter or
+Space leaves a dot at its centre, the same shape a stationary tap already
+produces.
 
 What's **judged, not enforced**: nothing stops a visitor from reloading and
 drawing a second mark, or a tenth. That's deliberate, not an oversight —

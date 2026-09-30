@@ -55,6 +55,17 @@ function strokeWidth(points: Point[]): number {
   return Math.max(MIN_WIDTH, Math.min(BASE_WIDTH, width));
 }
 
+// A keyboard has no drag to read a position or speed from, so its mark is a
+// single dot at the zone's own centre — the same shape a stationary tap
+// already produces, not a new kind of mark.
+function zoneCenter(zoneHit: SVGRectElement): Point {
+  const x = parseFloat(zoneHit.getAttribute("x") ?? "0");
+  const y = parseFloat(zoneHit.getAttribute("y") ?? "0");
+  const width = parseFloat(zoneHit.getAttribute("width") ?? "0");
+  const height = parseFloat(zoneHit.getAttribute("height") ?? "0");
+  return { x: x + width / 2, y: y + height / 2, t: performance.now() };
+}
+
 export function initDrawing(root: ParentNode): void {
   const svg = root.querySelector<SVGSVGElement>("#scroll");
   const zoneHit = root.querySelector<SVGRectElement>("#zone-hit");
@@ -66,6 +77,25 @@ export function initDrawing(root: ParentNode): void {
   let points: Point[] = [];
   let drawing = false;
   let done = false;
+
+  const submitMark = async (): Promise<void> => {
+    const d = smoothPath(points);
+    const width = strokeWidth(points);
+    status.textContent = "saving your mark…";
+
+    try {
+      const res = await fetch("/api/strokes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ d, width }),
+      });
+      if (!res.ok) throw new Error(`server said ${res.status}`);
+      location.reload();
+    } catch (err) {
+      status.textContent = `couldn't save your mark (${(err as Error).message}). Reload to try again.`;
+      done = false;
+    }
+  };
 
   zoneHit.addEventListener("pointerdown", (event) => {
     if (done) return;
@@ -91,25 +121,21 @@ export function initDrawing(root: ParentNode): void {
     if (!drawing) return;
     drawing = false;
     zoneHit.releasePointerCapture(event.pointerId);
-
-    const d = smoothPath(points);
-    const width = strokeWidth(points);
-    status.textContent = "saving your mark…";
-
-    try {
-      const res = await fetch("/api/strokes", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ d, width }),
-      });
-      if (!res.ok) throw new Error(`server said ${res.status}`);
-      location.reload();
-    } catch (err) {
-      status.textContent = `couldn't save your mark (${(err as Error).message}). Reload to try again.`;
-      done = false;
-    }
+    await submitMark();
   };
 
   zoneHit.addEventListener("pointerup", finish);
   zoneHit.addEventListener("pointercancel", finish);
+
+  zoneHit.addEventListener("keydown", (event) => {
+    if (done || drawing) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault(); // Space must not scroll the page instead
+    done = true;
+    prompt?.setAttribute("opacity", "0");
+    points = [zoneCenter(zoneHit)];
+    preview.setAttribute("d", smoothPath(points));
+    preview.setAttribute("stroke-width", String(strokeWidth(points)));
+    void submitMark();
+  });
 }

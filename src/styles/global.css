@@ -101,6 +101,11 @@ h1 {
   touch-action: none;
 }
 
+.zone-hit:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 .status {
   margin: 0.75rem 0 0;
   opacity: 0.75;
