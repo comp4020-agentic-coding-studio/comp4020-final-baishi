@@ -1,61 +1,62 @@
 # now
 
-## comp4020-final-baishi — first build run, 2026-09-30, 166h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-09-30, 159h to crit-8 cutoff
 
-New deliverable: the final project, starting from crit 8 ("It's alive!").
-This run picked the concept, built a working proof-of-life slice, and
-deployed it. No prior work existed — repo arrived as the bare template
-(placeholder busybox app, empty `CLAUDE.md`/`README.md`/`PROCESS.md`).
+Second run on this deliverable. Worked the first run's own flagged next
+action rather than starting a fresh sensor battery: the drawing zone
+(`#zone-hit`) had no keyboard path at all — no `tabindex`, no `role`, no
+keydown handler — and it was worse than a missing attribute, since the
+`<svg role="img">` it sat inside suppresses any focusable descendant from
+the accessibility tree regardless of what's added to it. Fixed properly
+in [`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d):
+dropped the svg's `role="img"` (it now holds real interactive content,
+not a static image), made the zone a genuine `role="button"` focusable
+control with a visible `:focus-visible` outline, and gave Enter/Space the
+same submit path pointer input uses — a single dot at the zone's centre,
+the same shape a stationary tap already produces (`draw.ts`'s
+`submitMark` is now shared between both input paths).
 
-**The app: "The Scroll".** A shared ink canvas that only ever grows: one
-blank strip at the right-hand edge of an SVG scroll, draw one mark there
-(mouse/pen/touch, via Pointer Events — a variable-width brush from real
-speed, quadratic-smoothed), and it's permanent — no edit, no delete, no
-accounts. Persistence is a single `strokes` table in `better-sqlite3` (no
-ORM — see `PROCESS.md`'s stack case), one file on the Fly volume at
-`/data/scroll.db`. Stack: Astro (server output, Node adapter standalone),
-chosen for file-based routing across two pages + one API route with no
-extra framework weight.
+A live axe-core sweep (not run since the very first commit) then found a
+real, narrow gap of its own: two elements failed AA contrast (2.8–2.9:1
+against the required 4.5:1) that axe itself only reported as
+"incomplete," not a violation — the tagline link's color was dimmed by
+its *parent's* `opacity` (which composites the whole subtree, so a
+darker child color alone can't undo it — axe can't resolve this either),
+and the drawing zone's "draw here" SVG text is a category axe's contrast
+checker structurally can't evaluate at all. Found by hand-computing the
+actual composited WCAG contrast ratio, not by trusting axe's clean-ish
+read. Fixed in [`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac):
+a dedicated `--link` custom property at full opacity for the light-mode
+link (dark mode's existing `--accent` already cleared 8.3:1, untouched),
+and dropped the zone-prompt's own `opacity`. Both README.md and CLAUDE.md
+updated to stop claiming drawing "needs a pointer" now that it doesn't.
 
-Five commits, all pushed to `origin/main` (`d654ec9`): the app scaffold,
-`spec/scroll.test.ts` (persistence over a fresh HTTP request, validation,
-no-delete), `README.md` + `CLAUDE.md` (the "good" argument — small on
-purpose, cites Robin Sloan's home-cooked-app essay, Ben Hoyt's small-web
-essay, Hundred Rabbits' own account of their practice — and the harness
-rules it implies), a real bug fix, and `PROCESS.md` (955 words, within the
-final brief's eventual 900–1100 band already).
-
-**Real bug found by live-browser testing, not code review:** a genuine
-`agent-browser` mouse-drag test worked immediately, but a tap-only stroke
-(pointerdown, no movement, pointerup) saved correctly yet rendered
-nothing — SVG has no paintable geometry for a bare `M x y` with no drawing
-command; needs a zero-length `L` to the same point before a round linecap
-actually shows a dot. Fixed at the data layer (`addStroke` in
-`src/lib/db.ts` normalises it, not just the client), with a spec assertion
-added. See `MEMORY.md`'s new SVG entry.
-
-`pnpm check` green (6/6 tests) locally, against a real `docker build` +
-`docker run --tmpfs /data` matching CI's own command exactly, and against
-the deployed app. Deployed via `flyctl deploy --remote-only --ha=false -a
-comp4020-final-baishi` — live, verified with real `agent-browser` pointer
-drags at both marking viewports: a mark drawn, page reloaded, mark still
-there (the crit's actual "trace persists" bar), console clean (aside from
-the known cross-session console-leak artifact, confirmed via
-`window.location.href` each time). Repo is still private — correct, the
-harness flips it public at cutoff, not this agent.
-
-Deliberately deferred, and named as such in `README.md`/`CLAUDE.md`: no
-enforced "one mark per visitor" (judged, not enforced, on purpose — real
-identity is crit 9's job), no real-time layer yet (crit 9), no
-server-side logging (crit 10). `reflections/crit-8.md` not yet written —
-correctly deferred to whichever run the next prompt calls "last" for this
-crit's 168-hour window.
+Verified at every stage: `pnpm check` green (6/6) before each commit;
+axe-core 0 violations after the contrast fix (the one remaining
+"incomplete" node is the same SVG-text limitation, now confirmed by hand
+to actually pass); a real `agent-browser` Tab walk on a rebuilt
+container reached the zone in the right order with a visible focus ring,
+and a real `Enter`/`Space` press persisted a mark across a fresh request.
+Re-verified against the exact CI container (`docker build` +
+`docker run --tmpfs /data` matching `.github/workflows/checks.yml`
+verbatim) before trusting it, same as the first run. Redeployed via
+`flyctl deploy --remote-only --ha=false -a comp4020-final-baishi`, and
+confirmed live: a real Tab+Enter on `https://comp4020-final-baishi.fly.dev/`
+reached the zone and left a mark that a fresh `curl` request still shows.
+`PROCESS.md` extended with a new section citing both commits;
+`pnpm check:evidence` clean except the still-correctly-deferred
+`reflections/crit-8.md`. All 4 commits pushed to `origin/main`
+(`ba4666b`). Repo still private — correct, harness-owned.
 
 ## Single most important next action
 
-Not the last run for crit 8. A future run in this window should: do a
-deepening pass (accessibility sweep, a live keyboard-only pass at the
-drawing zone — currently pointer-only, no keyboard way to draw at all,
-which is a real gap worth deciding on purpose rather than leaving
-implicit), and only write `reflections/crit-8.md` + do the doctrine's
-finishing steps on whichever run the prompt calls last for this cutoff.
+Not the last run for crit 8 (159h remaining at this run's start — plenty
+of runway left in the 168h window). No new self-administered angle is
+currently flagged: the keyboard gap named by the first run is closed, and
+a first-ever live a11y sweep found and fixed what it could find. A future
+run could try: `pnpm audit`/`outdated` (not yet run on this repo at all),
+a 200%-zoom reflow check on the scroll's `#canvas-wrap` (untried), or a
+real multi-mark pointer-drag test to confirm the zone correctly shifts
+and the "since &lt;date&gt;" line stays accurate as more marks accumulate.
+Only write `reflections/crit-8.md` and do the doctrine's finishing steps
+on whichever run the next prompt calls "last" for this cutoff.

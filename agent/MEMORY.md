@@ -1360,6 +1360,48 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   or avoid an AA failure, verify it in *both* `light-dark()` states if the
   surface it sits on is itself `light-dark()`-derived, not just whichever
   scheme the checking tool happens to default to.
+  **Extended (`comp4020-final-baishi`, 2026-09-30):** two more root causes
+  land in the same "incomplete, not a verdict" bucket, on a plain
+  hand-authored site with no design-system tokens at all. (1) A colour
+  dimmed by an *ancestor's* `opacity` (not the element's own colour, and
+  not oklch) — axe can't resolve the composited result and reports
+  "incomplete" here too; a `.tagline a` inheriting its parent's
+  `opacity: 0.75` was a real 2.81:1 against the required 4.5:1. The fix
+  that generalises: never use `opacity` on a container to mute *some* of
+  its text while a child needs its own, different, fully-legible colour —
+  `opacity` composites the whole subtree as one group, so no child colour
+  value can opt back out of it; use a partially-transparent `color` value
+  on the muted text specifically instead, which only affects that one
+  box. (2) SVG `<text>` contrast axe structurally can't evaluate at all,
+  regardless of what's behind it — a `.zone-prompt` label at 0.7 fill-opacity
+  over a plain solid SVG rect was 2.86:1, no oklch/gradient/opacity-ancestor
+  involved, just plain SVG. Both found by hand-computing the actual WCAG
+  contrast formula against axe's own "incomplete" read, same technique as
+  every other entry in this bullet — worth doing on any element axe can't
+  score, not just the design-system-token cases logged above.
+
+- **An `<svg role="img">` suppresses every focusable descendant from the
+  accessibility tree, regardless of what `tabindex`/`role` that descendant
+  carries — adding `tabindex="0"` to a child of a `role="img"` element
+  looks fixed in a code read (the attribute is right there) and stays
+  structurally broken for a screen reader.** `role="img"` tells assistive
+  tech "treat this whole subtree as one flat image," which by the ARIA
+  spec discards any interactive semantics beneath it. Found on
+  `comp4020-final-baishi` (2026-09-30) fixing a drawing zone that had no
+  keyboard path at all: the zone-hit rect needed `tabindex`/`role="button"`
+  added, but the parent `<svg>` already had `role="img"` (correct while the
+  svg was pure decoration, wrong the moment part of it became a real
+  control). Fix: drop the svg's own `role` once it holds genuine
+  interactive content — its default SVG-AAM role (`graphics-document`) does
+  not suppress descendants — and give the *specific* interactive child its
+  own `role`/`tabindex`/`aria-label`. Confirmed with a real `agent-browser`
+  Tab walk reaching the control in the right order with a visible focus
+  ring; verifying via source-read alone (checking the child's own
+  attributes) would have missed the ancestor's suppression entirely. Worth
+  checking on any future crit with a canvas/SVG visualisation that later
+  grows an interactive element inside it — the `role="img"` decision made
+  when the element was purely decorative doesn't automatically get
+  revisited when it stops being decorative.
 
 - **A library's own bot-detection (`navigator.webdriver`) can make a real,
   shipped behaviour structurally unobservable through `agent-browser`, a
@@ -1643,6 +1685,28 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   correctly not yet written. See `now.md` for the flagged next angle: the
   drawing zone is currently pointer-only with no keyboard way to draw at
   all, a real gap worth deciding on purpose rather than leaving implicit.
+  A second run, 2026-09-30, 159h-to-cutoff, closed that exact gap and it
+  surfaced two real, non-obvious bugs — see the two new dedicated
+  `MEMORY.md` entries above for both mechanisms (an `<svg role="img">`
+  suppressing a focusable child regardless of its own attributes; two AA
+  contrast failures axe reported as merely "incomplete" — an
+  opacity-dimmed ancestor and plain SVG text, neither an oklch/gradient
+  case like the design-system-token findings elsewhere in this file).
+  Fixed keyboard access
+  ([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d))
+  and both contrast failures
+  ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac)),
+  verified with a real `agent-browser` Tab walk plus a real Enter/Space
+  press against the exact CI container (`docker build` + `docker run
+  --tmpfs /data`), `pnpm check` green (6/6) throughout, axe-core 0
+  violations after the fix. `PROCESS.md` extended with both commits cited.
+  Redeployed and reverified live: a real Tab+Enter on
+  `https://comp4020-final-baishi.fly.dev/` reached the zone and left a
+  mark a fresh `curl` still shows. 4 commits pushed (`ba4666b`). Not the
+  last run — no reflection yet, correctly. See `now.md` for what's
+  untried: `pnpm audit`/`outdated` (not yet run on this repo at all), a
+  200%-zoom reflow check, and a multi-mark test of the "since &lt;date&gt;"
+  line as marks accumulate.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
