@@ -1727,6 +1727,34 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   re-derivation technique against `README.md`/`CLAUDE.md` (not yet tried on
   this repo at all, despite repeatedly finding real gaps elsewhere in this
   file).
+  A fourth run, 2026-10-01, 142h-to-cutoff, worked that exact list and the
+  clause-by-clause re-derivation paid off immediately: see the new
+  dedicated `MEMORY.md` entry above (extending the crit-5 palette-swap
+  lesson) for the mechanism — the second run's own contrast fix
+  (`874ccac`) introduced `--link` because `--accent` alone fails AA, and
+  used it in `global.css`'s `.tagline a`, but never checked
+  `readme.astro`'s own scoped `<style>` block, which still used `--accent`
+  directly for every link rendered from `README.md`. Every hyperlink on
+  `/readme/` — the crit's own "real material" page — was under the AA
+  floor. Fixed, along with the same file's `blockquote` rule still using
+  `opacity` (the exact anti-pattern `874ccac` rewrote `.tagline` to avoid,
+  dormant only because `README.md` has no blockquote yet)
+  ([`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a)).
+  The other flagged candidate — a full keyboard-only draw-then-reload
+  walkthrough, not just the keydown-persists check the second run already
+  did — also came back clean: a real `agent-browser` Tab walk reached the
+  link then the drawing zone in order, a real `Enter` press left a mark,
+  and a completely fresh navigation (not the client's own
+  `location.reload()`) showed it still there, against the exact CI
+  container. `pnpm check` green (6/6), axe-core 0 violations on both pages
+  after the fix. `PROCESS.md` extended, pushed (`b8acc7d`), redeployed and
+  reverified live (the corrected link color read back correctly on
+  `https://comp4020-final-baishi.fly.dev/readme/`, console clean). Not the
+  last run — no reflection yet, correctly. No new self-administered angle
+  is currently flagged; a future run could try `pnpm audit`/`outdated`
+  again (last checked at the third run) or extend the clause-by-clause
+  read to the Dockerfile/CI workflow files, which haven't had this
+  treatment yet.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -2467,6 +2495,22 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   other reason, grep the whole repo for the old hex literals (CSS, TS,
   SVG/PNG assets) before considering the swap done, not just the file the
   bug report named.
+  **The inverse gap is just as real: a fix that introduces a new corrected
+  value only lands in the file the bug report named, and a sibling file
+  using the same underlying design token silently keeps the old, broken
+  one.** On `comp4020-final-baishi`, a contrast fix created `--link`
+  specifically because `--accent` alone fails AA against the page
+  background, and used it on `.tagline a` in `global.css` — but
+  `readme.astro`'s own scoped `<style>` block, styling every link rendered
+  from `README.md` (a different file, sharing the same CSS custom
+  properties), still referenced `--accent` directly, and nobody had ever
+  cross-checked it. Found on a later run's first-ever clause-by-clause
+  re-derivation of `README.md`/`CLAUDE.md` against the code — not a fresh
+  technical sensor, just reading the project's own files end to end and
+  checking every styled element against them. Whenever a contrast/palette
+  fix introduces a new named value to replace a bad one, grep for every
+  *other* place the bad value (or the same underlying color pairing) is
+  still used, not just confirm the one reported instance is fixed.
 - **To check whether a game/interaction's colour pair is distinguishable
   under colour-vision deficiency, compute it — don't try to render or
   screenshot a simulation.** `agent-browser` has no CVD emulation

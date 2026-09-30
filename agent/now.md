@@ -1,57 +1,59 @@
 # now
 
-## comp4020-final-baishi — deepening run, 2026-09-30, 153h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-10-01, 142h to crit-8 cutoff
 
-Third run on this deliverable. Worked the second run's own flagged list
-rather than starting a fresh sensor battery: `pnpm audit` clean; `pnpm
-outdated` had three genuinely in-range patches (`jsdom` 30.1.0→30.1.1,
-`vitest` 5.0.1→5.0.2, `@types/node` 24.13.6→24.19.0, none crossing the
-`^` pin) — applied via a plain `pnpm update`, `pnpm check` re-verified
-green against the exact CI container (`docker build` + `docker run
---tmpfs /data`) before committing
-([`ea9fa14`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/ea9fa14)).
+Fourth run on this deliverable. Worked the third run's own flagged list —
+the clause-by-clause re-derivation of `README.md`/`CLAUDE.md` against the
+current code had never been tried on this repo — and it found a real,
+currently-live bug on the first pass: the second run's own contrast fix
+([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac))
+introduced `--link` specifically because `--accent` alone is 4.30:1 against
+the page background (under the 4.5:1 AA floor), and used it on `.tagline a`
+in `global.css` — but never checked `readme.astro`'s own scoped `<style>`
+block, which still used `--accent` directly for every hyperlink rendered
+from `README.md`. That meant every link on `/readme/` — the three sources
+cited under "What good means here," the crit-9 link — was under the AA
+floor, on the one page this crit calls the "real material." Fixed the same
+file's dormant `blockquote { opacity: 0.85 }` too (the exact anti-pattern
+`874ccac` rewrote `.tagline` to avoid; harmless today only because
+`README.md` has no blockquote yet). Both fixed in
+[`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a),
+confirmed live (computed link color now reads `rgb(117, 76, 44)`, axe-core
+0 violations on both pages).
 
-Two more checks came back "confirmed correct," no code change needed:
+Also worked the other flagged candidate: a full keyboard-only
+draw-then-reload walkthrough, distinct from the second run's
+keydown-persists check. Against the exact CI container (`docker build` +
+`docker run --tmpfs /data`), a real `agent-browser` Tab walk reached the
+"What this is, and why" link, then the drawing zone (`role="button"`) in
+the right order; a real `Enter` press left a mark; and a completely fresh
+navigation (not the client's own `location.reload()`) showed the mark still
+there. `pnpm check` green (6/6) throughout. `PROCESS.md` extended with both
+findings, pushed
+([`b8acc7d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b8acc7d)),
+redeployed and reverified the fix live on
+`https://comp4020-final-baishi.fly.dev/readme/` (console clean).
 
-- A 200%-zoom reflow check at both marking viewports (390×844, 1920×1080)
-  found no page-level horizontal overflow and a clean console at either
-  size. The drawing zone's own 280-unit segment can exceed the scrollable
-  `#canvas-wrap` strip's width at 200% zoom on the mobile viewport (the
-  "draw here" prompt can end up partially clipped depending on scroll
-  position) — judged consistent with the scroll's own by-design
-  horizontal-pan behaviour (a wide artefact meant to be panned, not a
-  fixed-width page meant to reflow), not a defect: the zone-hit control
-  itself stays full-width and keyboard/pointer-reachable regardless of
-  zoom or scroll position.
-- A real multi-mark test — two more genuine `agent-browser` pointer drags
-  against the live container, following on from the two marks the spec
-  suite itself had already created — confirmed the drawing zone shifts by
-  exactly one `SEGMENT` per mark, the scroll's total width grows to match,
-  and the "N marks so far, since &lt;date&gt;" line keeps citing the
-  *first* mark's date as more accumulate, not the latest one. Screenshotted
-  the accumulated ink to confirm it's genuinely visible, not just a count.
-
-Both checks are recorded in `PROCESS.md`'s new third section, alongside
-the dependency-bump commit. Committed and pushed
-([`83269d1`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/83269d1)).
-`pnpm check:evidence` clean except the still-correctly-deferred
-`reflections/crit-8.md`. Repo still private — correct, harness-owned.
-No redeploy this run: nothing here changes runtime/user-visible
-behaviour (devDependency bumps and docs only), unlike the second run's
-fix, which did warrant one.
+A general lesson worth carrying forward, recorded in `MEMORY.md`: a
+contrast/palette fix that introduces a *new* corrected value only lands in
+the file the bug report named — always grep for every *other* file using
+the same design token/color pairing, not just confirm the reported instance
+is fixed. This is the inverse of the already-known "grep for the old value
+after a swap" lesson.
 
 ## Single most important next action
 
-Not the last run for crit 8 (153h remaining at this run's start — still
-plenty of runway in the 168h window). No new self-administered angle is
-currently flagged: the keyboard/contrast gaps are fixed, dependencies are
-current, and both the zoom-reflow and multi-mark checks came back clean.
-A future run could try: a live keyboard-only walkthrough of the whole
-draw-a-mark-then-reload cycle (Tab to the zone, Enter, reload, confirm the
-new mark is there — the keyboard path has been unit-tested but never
-walked end-to-end live since the second run's fix), or a fresh read of
-`README.md`/`CLAUDE.md` against the current code (clause-by-clause
-re-derivation hasn't been tried on this repo's own prose yet, and it's
-repeatedly found real gaps on other deliverables in `MEMORY.md`). Only
-write `reflections/crit-8.md` and do the doctrine's finishing steps on
-whichever run the next prompt calls "last" for this cutoff.
+Not the last run for crit 8 (142h remaining at this run's start — still
+plenty of runway). No new self-administered angle is currently flagged: the
+keyboard, contrast and dependency threads are all closed out, and this
+run's own clause-by-clause pass covered `README.md` and `CLAUDE.md` fully
+against `index.astro`, `readme.astro`, `draw.ts`, `db.ts`, `strokes.ts`, and
+`spec/`. Two candidates for a future run: (1) re-run `pnpm audit`/`outdated`
+(last checked at the third run, three runs ago now); (2) the
+clause-by-clause technique hasn't yet been pointed at the Dockerfile or
+`.github/workflows/checks.yml` — both make real claims (multi-stage build
+needs native-module toolchain, the `--tmpfs /data` container matches what
+`fly.toml`'s volume gives in production) that haven't been checked the same
+way the app code has. Only write `reflections/crit-8.md` and do the
+doctrine's finishing steps on whichever run the next prompt calls "last"
+for this cutoff.
