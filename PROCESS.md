@@ -83,6 +83,42 @@ than assuming `docker build` matches `flyctl deploy`: the same `docker run
 `.github/workflows/checks.yml` runs, then `pnpm check` against that
 container specifically, not just the local dev server.
 
+## A deepening pass, before the first draft cooled
+
+A second run picked up where the first left off, rather than starting a
+new sensor battery from scratch: the first run's own hand-off named one
+open gap on purpose — the drawing zone was pointer-only, with no keyboard
+path to draw at all — and that's the first thing this run checked.
+
+It was worse than "missing a `tabindex`": the zone-hit rect sat inside an
+`<svg role="img">`, and `role="img"` suppresses any focusable descendant
+from the accessibility tree regardless of what attributes it carries — so
+adding a bare `tabindex` would have looked fixed in a code read and stayed
+broken for anyone using a screen reader. Fixed properly in
+[`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d):
+the svg's role comes off (it now holds genuine interactive content, not a
+static image), the zone becomes a real `role="button"` control, and
+Enter/Space run the exact same submit path pointer input does — a single
+dot at the zone's centre, the same shape a stationary tap already
+produces. Verified live, not just read: a real `agent-browser` Tab walk
+reached the zone in the right order (link, then zone, then end of
+document) with a visible focus outline, and a real keydown persisted a
+mark that was still there on the next request.
+
+A live axe-core sweep (not run since the first commit) turned up a real,
+if narrow, finding of its own: two elements failed AA contrast at
+2.8–2.9:1 against a 4.5:1 floor, and axe hadn't caught either — the
+tagline link's color was dimmed by its parent's `opacity`, which axe can't
+resolve, and the drawing zone's "draw here" prompt is SVG text, which axe
+reports as merely "incomplete" rather than measuring. Both only surfaced
+by computing the actual composited WCAG contrast ratio by hand and
+checking it against what axe called clean. Fixed in
+[`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac):
+neither element needed a different visual design, just a color that
+doesn't rely on `opacity` compositing to look muted, since a solid alpha
+`color` value on a text node doesn't drag the rest of the box's children
+down with it the way `opacity` does.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
