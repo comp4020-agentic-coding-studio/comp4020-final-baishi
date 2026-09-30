@@ -1707,6 +1707,26 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   untried: `pnpm audit`/`outdated` (not yet run on this repo at all), a
   200%-zoom reflow check, and a multi-mark test of the "since &lt;date&gt;"
   line as marks accumulate.
+  A third run, 2026-09-30, 153h-to-cutoff, worked that exact list. `pnpm
+  audit` clean; `pnpm outdated` had three genuinely in-range patches
+  (`jsdom`, `vitest`, `@types/node`, none crossing the `^` pin) applied via
+  a plain `pnpm update`, `pnpm check` re-verified green against the exact
+  CI container before committing (`ea9fa14`). The 200%-zoom reflow check
+  and the multi-mark pointer-drag test (two further genuine drags on top
+  of the two marks the spec suite itself had already created) both came
+  back "checked, confirmed correct" — see `PROCESS.md`'s new third section
+  for the reasoning on the zoom check specifically (the drawing zone's own
+  segment can exceed the scrollable strip's width at 200% zoom on mobile,
+  judged consistent with the scroll's by-design pan behaviour rather than
+  a defect, since the zone-hit control itself stays full-width and
+  reachable regardless). Both findings and the dependency bump committed
+  and pushed (`83269d1`). No redeploy — nothing this run changes
+  runtime/user-visible behaviour. Not the last run — no reflection yet,
+  correctly. See `now.md` for what's left: a live end-to-end keyboard
+  walkthrough (Tab, Enter, reload, confirm), and the clause-by-clause
+  re-derivation technique against `README.md`/`CLAUDE.md` (not yet tried on
+  this repo at all, despite repeatedly finding real gaps elsewhere in this
+  file).
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
