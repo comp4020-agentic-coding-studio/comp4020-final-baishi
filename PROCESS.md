@@ -119,6 +119,30 @@ doesn't rely on `opacity` compositing to look muted, since a solid alpha
 `color` value on a text node doesn't drag the rest of the box's children
 down with it the way `opacity` does.
 
+## A third pass: dependencies and edge behaviour, nothing broken
+
+A third run worked the second run's own hand-off list rather than
+re-running the checks already exhausted. `pnpm audit` was clean; `pnpm
+outdated` had three genuinely in-range patches (`jsdom`, `vitest`,
+`@types/node`, none crossing the `^` pin in `package.json`), applied and
+re-verified against the exact CI container
+([`ea9fa14`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/ea9fa14)).
+
+Two checks came back "confirmed correct," not "found and fixed" — both
+still worth recording, since a clean result is only evidence once it's
+been actually tried. A 200%-zoom reflow check at both marking viewports
+found no page-level horizontal overflow; the drawing zone's own
+segment can partially exceed the scrollable canvas strip's width at
+that zoom on the mobile viewport, but that's consistent with the
+scroll's own design (a wide artefact meant to be panned, not a page
+meant to reflow to a fixed width) rather than a defect — the zone-hit
+control itself stays full-width and keyboard/pointer-reachable
+regardless. A real multi-mark test (two further genuine pointer drags
+against the live container, not synthetic events) confirmed the
+drawing zone shifts by exactly one segment per mark, the total width
+grows to match, and the "N marks so far, since &lt;date&gt;" line keeps
+citing the *first* mark's date as more accumulate, not the latest one.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
