@@ -75,7 +75,10 @@ export function initDrawing(root: ParentNode): void {
   if (!svg || !zoneHit || !preview || !status) return;
 
   let points: Point[] = [];
-  let drawing = false;
+  // Which pointer owns the current drag, not just whether one is happening —
+  // a stray second contact (a palm, a bracing finger) during a one-finger
+  // drag must never move the stroke or end it early.
+  let drawingPointerId: number | null = null;
   let done = false;
 
   const submitMark = async (): Promise<void> => {
@@ -100,7 +103,7 @@ export function initDrawing(root: ParentNode): void {
   zoneHit.addEventListener("pointerdown", (event) => {
     if (done) return;
     done = true; // one mark per visit to this page; see CLAUDE.md
-    drawing = true;
+    drawingPointerId = event.pointerId;
     zoneHit.setPointerCapture(event.pointerId);
     prompt?.setAttribute("opacity", "0");
     points = [svgPoint(svg, event.clientX, event.clientY)];
@@ -108,7 +111,7 @@ export function initDrawing(root: ParentNode): void {
   });
 
   zoneHit.addEventListener("pointermove", (event) => {
-    if (!drawing) return;
+    if (event.pointerId !== drawingPointerId) return;
     const p = svgPoint(svg, event.clientX, event.clientY);
     const last = points[points.length - 1];
     if (Math.hypot(p.x - last.x, p.y - last.y) < MIN_MOVE) return;
@@ -118,8 +121,8 @@ export function initDrawing(root: ParentNode): void {
   });
 
   const finish = async (event: PointerEvent): Promise<void> => {
-    if (!drawing) return;
-    drawing = false;
+    if (event.pointerId !== drawingPointerId) return;
+    drawingPointerId = null;
     zoneHit.releasePointerCapture(event.pointerId);
     await submitMark();
   };
@@ -128,7 +131,7 @@ export function initDrawing(root: ParentNode): void {
   zoneHit.addEventListener("pointercancel", finish);
 
   zoneHit.addEventListener("keydown", (event) => {
-    if (done || drawing) return;
+    if (done || drawingPointerId !== null) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault(); // Space must not scroll the page instead
     done = true;
