@@ -205,6 +205,49 @@ comment and this file's own stack section, which had repeated the same
 unverified claim since the first run. No functional change to the app;
 one fewer unverified assumption in a file that gets rebuilt on every push.
 
+## A sixth pass: checking CI's own comments, then a real pointer bug
+
+A sixth run pointed the clause-by-clause technique at a file it had never
+reached: `.github/workflows/checks.yml`. Every comment there checked out
+against the files it describes — the `if` gate's claim about the repo's
+visibility, the Dockerfile/Fly parity the build-and-start step names, the
+one-machine-one-volume shape `fly.toml` documents, and the course-key
+detector's own stated reasoning against `.github/trufflehog.yml`. Nothing
+to fix; `pnpm audit`/`outdated` also came back unchanged (both entries
+still major-only).
+
+Reading `src/lib/draw.ts` fresh afterwards, rather than re-running an
+exhausted sensor battery, found a real bug: `drawing` was a plain boolean,
+not tied to which pointer was actually drawing. A stray second contact
+during a one-finger drag — a palm, a bracing finger, anything a touchscreen
+reports as its own pointer — would get its movement silently appended into
+the real stroke (`pointermove` only checked the boolean), and its own
+`pointerup` would end the drag early by calling
+`releasePointerCapture` with a pointer ID the zone never captured.
+Confirmed live with two independent synthetic `PointerEvent` sequences
+against a running container: the stray pointer's move visibly corrupted
+the preview path, and its release threw `NotFoundError` inside `finish`'s
+async body — an unhandled rejection, not a caught one, since the throw
+happens before the function's first `await`. That left `drawing` already
+false, so the real pointer's own, legitimate `pointerup` right after was a
+silent no-op: no fetch, no status update, no error shown, and `done` was
+already set at the original `pointerdown` — the zone was now permanently
+inert for the rest of that page load. A visitor's one mark, gone with no
+sign anything had gone wrong.
+
+Fixed by tracking the owning pointer ID instead of a bare flag
+([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)):
+`pointermove` and `finish` now both check `event.pointerId` against the
+one that started the drag, so a second pointer's events are inert from the
+first one. No `spec/` test covers this one: jsdom, which every HTTP-level
+test in `spec/` runs under, has no `createSVGPoint`, `getScreenCTM` or
+`setPointerCapture` at all (confirmed directly, not assumed), so a
+pointer-identity bug in `draw.ts` isn't "the kind a test can hold" the way
+`CLAUDE.md` means it — the live, two-pointer `agent-browser` reproduction
+above is the verification, re-run clean against the exact CI container
+after the fix (`pnpm check` 6/6, no rejection, the real mark still saves
+and the count still increments).
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
