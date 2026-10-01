@@ -199,6 +199,34 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   on `comp4020-final-baishi` (2026-09-30) testing the exact
   `docker build`/`docker run --tmpfs /data` sequence CI's `checks.yml` runs,
   before trusting a `flyctl deploy`.
+- **A Dockerfile comment claiming "native build toolchain needed as a
+  fallback for X" is a testable claim, not a safe default to copy —
+  inspect the actual installed package before trusting it.** On
+  `comp4020-final-baishi`, the template's own Dockerfile installed
+  `python3 make g++` in both build and runtime stages with a comment
+  saying they were "the fallback for when no prebuilt binary matches this
+  exact node/arch (prebuild-install tries that first)" for
+  `better-sqlite3`. Checked directly by inspecting the installed package
+  inside a built image: `better-sqlite3@13.0.3` has no `install`/
+  `postinstall` script at all (its `package.json` `scripts` block only has
+  `build-release`/`build-debug`/`test` — nothing npm/pnpm ever runs on
+  install) — it ships a prebuilt N-API binary for every platform/arch pair
+  directly inside the package itself (`prebuilds/linux-x64.node` and seven
+  siblings), selected at require-time by `lib/binding.js` on
+  `process.platform`/`process.arch` alone. N-API is ABI-stable across Node
+  versions, so there's no "exact node/arch" mismatch this fallback could
+  ever be needed for on the plain `linux-x64` glibc image the Dockerfile
+  already builds on. Confirmed by rebuilding `--no-cache` with the apt
+  install removed from both stages and running the exact CI command
+  (`docker build` + `docker run -d --init --tmpfs /data`): built clean, a
+  real `curl` POST round-tripped a mark, `pnpm check` green against the
+  container. The general check, worth applying to any future Node/native-
+  module Dockerfile: grep the dependency's own `package.json` for an
+  `install`/`postinstall` script and check whether it ships `prebuilds/`
+  directly, before assuming a native toolchain install is load-bearing —
+  many modern native modules (anything built on N-API, not just
+  better-sqlite3) bundle prebuilt binaries and need no toolchain on any
+  mainstream Linux/macOS/Windows target at all.
 - A bare SVG `<path d="M x y">` (a moveto with no drawing command at all)
   has **no paintable geometry** — Chromium renders nothing for it, even
   with `stroke-linecap: round` set, even though the path element exists in
@@ -1755,6 +1783,27 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   again (last checked at the third run) or extend the clause-by-clause
   read to the Dockerfile/CI workflow files, which haven't had this
   treatment yet.
+  A fifth run, 2026-10-01, 135h-to-cutoff, worked that exact candidate and
+  found a real, if purely infrastructural, bug: the Dockerfile's own
+  comment, and `PROCESS.md`'s stack section repeating it, claimed
+  `python3`/`make`/`g++` were installed as the fallback for when no
+  prebuilt `better-sqlite3` binary matches the image's node/arch — see the
+  new dedicated `MEMORY.md` entry above for the mechanism (the package has
+  no install/postinstall script at all; it bundles prebuilt N-API binaries
+  per platform/arch directly). `pnpm audit`/`outdated` were re-run first
+  (clean; both outdated entries still major-only, correctly left alone).
+  Removed the apt install from both Docker stages, verified with a
+  `--no-cache` rebuild against the exact CI command (`docker build` +
+  `docker run -d --init --tmpfs /data`): `pnpm check` green (6/6), a real
+  `curl` POST round-tripped a mark. Fixed and pushed (`961bafc`),
+  redeployed (`flyctl deploy --remote-only --ha=false`, image now 149MB),
+  live `/` and `/readme/` both 200, a real mark round-trip still showing
+  correctly on the persistent Fly volume. Not the last run — no reflection
+  yet, correctly. No new self-administered angle is currently flagged; a
+  future run could extend the clause-by-clause technique to
+  `.github/workflows/checks.yml` itself (not yet tried, only the Dockerfile
+  has been), or re-check `pnpm audit`/`outdated` again after enough time
+  has passed.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
