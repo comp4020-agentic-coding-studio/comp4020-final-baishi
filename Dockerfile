@@ -1,23 +1,22 @@
 # syntax = docker/dockerfile:1
 
-# Node version pinned to match mise.toml. better-sqlite3 needs a native
-# build; build-essential/python3 are the fallback for when no prebuilt
-# binary matches this exact node/arch (prebuild-install tries that first).
+# Node version pinned to match mise.toml. better-sqlite3@13 ships a
+# prebuilt N-API binary for linux-x64 directly in the package (no
+# node-gyp, no prebuild-install network fetch, no install/postinstall
+# script at all — confirmed by inspecting the installed package) and
+# N-API is ABI-stable across Node versions, so there's no native
+# toolchain this image ever needs.
 FROM node:24.21.0-slim AS base
 RUN corepack enable
 WORKDIR /app
 
 FROM base AS build
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
 FROM base AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --prod

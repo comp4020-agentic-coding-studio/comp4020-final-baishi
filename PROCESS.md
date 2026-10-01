@@ -42,13 +42,12 @@ theory that a smaller stack is easier to reason about while the schema is
 still one table, and revisiting it explicitly (not silently) if crit 9's
 multi-user work strains it.
 
-The build is multi-stage: `pnpm build` in a stage with `python3`/`make`/`g++`
-(better-sqlite3's native module, in case no prebuilt binary matches this
-exact Node/arch), then a runtime stage that installs only production
-dependencies and copies `dist/` across. I tested this exact path locally —
-`docker build` then `docker run --tmpfs /data` matching CI's own command —
-before trusting it to deploy; a build that only works via `pnpm dev`
-doesn't tell you anything about the container CI actually ships.
+The build is multi-stage: `pnpm build`, then a runtime stage that installs
+only production dependencies and copies `dist/` across. I tested this exact
+path locally — `docker build` then `docker run --tmpfs /data` matching CI's
+own command — before trusting it to deploy; a build that only works via
+`pnpm dev` doesn't tell you anything about the container CI actually
+ships.
 
 ## How I directed and checked the work
 
@@ -176,6 +175,35 @@ mark, and a completely fresh navigation (not just the client's own
 stranger... finds their trace still there when they come back" bar, walked
 end to end via keyboard alone. `pnpm check` green (6/6) against that
 container throughout. Redeployed and reverified the live contrast fix.
+
+## A fifth pass: a Dockerfile comment making a claim that doesn't hold
+
+A fifth run pointed the same clause-by-clause technique at a file the first
+four had only ever run, never read critically: the Dockerfile's own
+comment, and the stack section above describing it. Both claimed
+`python3`/`make`/`g++` were there as "the fallback for when no prebuilt
+binary matches this exact node/arch (prebuild-install tries that first)."
+Checking it against the actual installed package rather than trusting the
+comment: `better-sqlite3@13.0.3` has no `install`/`postinstall` script at
+all — no `prebuild-install` step ever runs — because the package ships a
+prebuilt N-API binary for every platform/arch pair directly inside itself
+(`prebuilds/linux-x64.node` and seven siblings), selected at require-time
+by `lib/binding.js` on `process.platform`/`process.arch` alone. N-API is
+ABI-stable across Node versions, so there's no "exact node/arch" matching
+to fail in the first place on the `linux-x64` glibc image this Dockerfile
+already builds on. The fallback path the comment describes can't trigger
+here; the apt install was dead weight the whole time, directly against
+this crit's own standard ("if we can use less technology to solve any one
+task, we will," cited in `README.md`).
+
+Removed the `apt-get install` step from both stages, rebuilt with
+`--no-cache` against the exact CI command (`docker build` +
+`docker run -d --init -p 8080:8080 --tmpfs /data`), and reran `pnpm check`
+against that container — all 6 tests still green, a real `curl` POST to
+`/api/strokes` still wrote and rendered a mark. Fixed the Dockerfile
+comment and this file's own stack section, which had repeated the same
+unverified claim since the first run. No functional change to the app;
+one fewer unverified assumption in a file that gets rebuilt on every push.
 
 ## What's still a first draft
 
