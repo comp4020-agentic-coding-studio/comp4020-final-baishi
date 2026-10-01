@@ -1829,6 +1829,35 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   self-administered angle is currently flagged; a future run could try the
   CSS-property-literacy lens on `global.css` (not yet applied to this repo)
   or re-read `src/pages/api/strokes.ts`/`layout.ts` for a similar gap.
+  A seventh run, 2026-10-02, 118h-to-cutoff, worked that exact list. The
+  CSS-property-literacy lens, applied to `global.css`'s one real touch
+  surface for the first time, found `.zone-hit` (the drawing zone — a
+  sustained-touch-drag surface, the same shape as crit-4's pad and crit-5's
+  game canvas, both of which already needed this exact fix) had neither a
+  tap-highlight override nor iOS long-press-callout/text-selection-magnifier
+  protection, matching the pattern logged for those two other repos. Fixed
+  pre-emptively (unverifiable as a visual artefact in this sandbox, same
+  `xcrun simctl` gap as every other instance of this lens)
+  ([`17216c8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/17216c8)).
+  The `forced-colors` border-loss variant came back correctly inapplicable —
+  `.zone-hit` gets its visible shape from a sibling SVG stroke, not a CSS
+  `background`/`box-shadow`, so there's nothing for forced-colors to strip.
+  A fresh read of `layout.ts`/`strokes.ts` found no new identity bug but did
+  name a real, correctly-out-of-scope design point: two visitors loading at
+  the same stroke count get the same `zoneStart`, so simultaneous drawing
+  would visually collide — exactly the concurrent-multi-visitor case
+  `README.md` already defers to crit 9. `pnpm audit` clean, one in-range
+  `vitest` patch applied
+  ([`bba04ae`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/bba04ae)).
+  Both verified against the exact CI container, `pnpm check` green (6/6),
+  `PROCESS.md` extended to a seventh moment
+  ([`bbe824c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/bbe824c)),
+  redeployed and reverified live (`getComputedStyle` on the live page
+  confirms the new properties, console clean, both pages 200). Not the last
+  run — no reflection yet, correctly. No new self-administered angle is
+  currently flagged; a future run could try a fresh read of
+  `src/pages/readme.astro` (the `marked`-rendering path, not yet examined
+  with this lens) or re-check `pnpm audit`/`outdated` again later.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
