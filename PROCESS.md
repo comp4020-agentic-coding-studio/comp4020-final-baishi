@@ -248,6 +248,53 @@ above is the verification, re-run clean against the exact CI container
 after the fix (`pnpm check` 6/6, no rejection, the real mark still saves
 and the count still increments).
 
+## A seventh pass: a CSS lens the drawing zone hadn't had yet
+
+A seventh run worked the sixth run's own hand-off: a CSS-property-literacy
+pass on `global.css` — checking the drawing zone against mobile-browser
+touch defaults that `touch-action: none` doesn't cover, the same lens
+already applied to other crits' touch surfaces. `.zone-hit` is this app's
+one sustained-touch-drag surface (drawing is a hold-and-move gesture, same
+shape as a synth pad held for a note or a game canvas held for a drag), and
+it had neither a tap-highlight override nor protection from iOS's
+long-press callout and text-selection magnifier — both real, documented
+Chromium/WebKit defaults, not theoretical. Added
+`-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`
+and `user-select: none` to `.zone-hit`
+([`17216c8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/17216c8)).
+Unverifiable as a visual artefact
+in this sandbox (no real touch hardware, the same `xcrun simctl` gap
+logged for every other crit this pattern has come up in), so this is a
+documented-default fix rather than a screenshot-confirmed one — confirmed
+only via `getComputedStyle` showing the properties applied, and a real
+pointer drag afterwards against the exact CI container showing no
+regression (`pnpm check` 6/6, a fresh mark saved and the count
+incremented).
+
+One CSS-literacy check from the same lens came back correctly inapplicable:
+`forced-colors: active` border-loss is a real gap for a custom control that
+gets its shape from `background`/`box-shadow` rather than a `border` — this
+app's only interactive surface is `.zone-hit`, which is `fill: transparent`
+by design (its visible shape comes from the sibling `.zone-outline` SVG
+stroke, not a CSS box-shadow), so there's no background/shadow-dependent
+shape to lose.
+
+A fresh read of `src/lib/layout.ts` and `src/pages/api/strokes.ts` (the
+sixth run's other flagged candidate) found no new identity/cardinality
+bug — `strokes.ts` is a stateless, fully-validated POST handler with
+nothing to key by identity, and `layout.ts` is two pure functions. It did
+surface a real design question, already correctly scoped out: two visitors
+who load the page at the same stroke count get the same `zoneStart`, so
+simultaneous drawing from both would land in the same on-canvas segment.
+That's the concurrent-visitor case `README.md` already names as deferred
+to crit 9's real-time/multi-user work, not a bug this crit's "one visitor
+end to end" scope claims to solve.
+
+`pnpm audit` clean; `pnpm outdated` had one genuinely in-range patch
+(`vitest` 5.0.2 → 5.0.3, inside its `^` pin), applied and re-verified
+against the exact CI container
+([`bba04ae`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/bba04ae)).
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
