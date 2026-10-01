@@ -110,6 +110,15 @@ h1 {
   fill: transparent;
   cursor: crosshair;
   touch-action: none;
+  /* The hit area is the one sustained-touch-drag surface on the page: the
+     mobile-browser defaults a plain `touch-action: none` doesn't cover
+     (Android's tap-highlight rectangle, iOS's long-press callout and
+     text-selection magnifier) would otherwise flash over or interrupt a
+     real drag mid-stroke. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .zone-hit:focus-visible {
