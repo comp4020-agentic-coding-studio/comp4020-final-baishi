@@ -1804,6 +1804,31 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   `.github/workflows/checks.yml` itself (not yet tried, only the Dockerfile
   has been), or re-check `pnpm audit`/`outdated` again after enough time
   has passed.
+  A sixth run, 2026-10-01, 129h-to-cutoff, worked that exact candidate:
+  `checks.yml`'s own comments all checked out clean against `fly.toml`/
+  `.github/trufflehog.yml` (no drift), and `pnpm audit`/`outdated` were
+  unchanged. With nothing flagged, re-read `src/lib/draw.ts` fresh and found
+  a real bug matching the pointer-identity shape already logged for crit-4/
+  crit-5 — see the new dedicated `MEMORY.md` entry above (the third instance
+  of that shape, and the worst: a stray second pointer's release could
+  silently drop the real pointer's own mark entirely via an unhandled
+  promise rejection, with the drawing zone then permanently inert for the
+  rest of that page load and no visible sign anything had gone wrong).
+  Confirmed live with two-pointer synthetic sequences before and after the
+  fix, against both a local CI-matching container and the live deployment.
+  Fixed by tracking `drawingPointerId` instead of a bare boolean
+  ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)),
+  written up as a sixth `PROCESS.md` moment, including why no `spec/` test
+  covers it (jsdom has no `createSVGPoint`/`getScreenCTM`/
+  `setPointerCapture` at all, confirmed directly)
+  ([`03cedee`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/03cedee)).
+  `pnpm check` green (6/6) against the exact CI container, redeployed and
+  reverified live (the same repro against `https://comp4020-final-baishi.
+  fly.dev/` left the real mark unaffected, count incremented, console
+  clean). Not the last run — no reflection yet, correctly. No new
+  self-administered angle is currently flagged; a future run could try the
+  CSS-property-literacy lens on `global.css` (not yet applied to this repo)
+  or re-read `src/pages/api/strokes.ts`/`layout.ts` for a similar gap.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3101,6 +3126,50 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   "is something being dragged/pressed/held" and ask whether it would
   survive a *second*, unrelated pointer's full down-then-up cycle
   happening in the middle of the first one's gesture.
+- **A third instance of the same shared-boolean-vs-pointerId shape, found by
+  grepping for the pattern itself (the general check named just above) on a
+  third, unrelated repo — and this time the failure mode was worse than
+  either prior instance.** On `comp4020-final-baishi`'s drawing zone
+  (`src/lib/draw.ts`), `drawing` was a bare boolean exactly like crit-5's
+  `dragging` before its fix. A stray second pointer's `pointermove` got
+  silently appended into the real stroke (no identity check at all, unlike
+  crit-5 where the gap was narrower — there the second pointer's *down* was
+  blocked by a separate `done`-style guard; here `pointermove` had no guard
+  of its own). Worse, the stray pointer's `pointerup` calling
+  `finish(event)` executed `zoneHit.releasePointerCapture(event.pointerId)`
+  for a pointer ID the zone never captured — and unlike crit-5's sandbox-only
+  `setPointerCapture` artifact (logged just above, masked by a
+  synthetic-dispatch limitation that wouldn't occur on real hardware), this
+  `NotFoundError` is a *real*, spec-correct throw for any pointer ID that
+  was genuinely never captured, synthetic or not. Because `finish` is an
+  `async` function and the throw happens before its first `await`, it
+  becomes an **unhandled promise rejection** (confirmed via a
+  `window.addEventListener('unhandledrejection', ...)` listener, not
+  `window.onerror` — a synchronous-looking throw inside an `async` function
+  body doesn't fire a plain `error` event), not a caught exception — so
+  `submitMark()` for the *real* pointer's eventual `finish` call never ran.
+  The flag (renamed `drawingPointerId`) was already cleared by the stray
+  pointer's own `finish` invocation, so the genuine pointer's own, correct
+  `pointerup` right after was a silent no-op: no fetch, no status update, no
+  visible error, and the app's own `done` one-mark-per-visit flag was
+  already set — the zone was now permanently inert for the rest of that
+  page load, with no sign anything had gone wrong. Confirmed live with two
+  independent synthetic `PointerEvent` sequences against a running
+  container, before and after the fix (`drawingPointerId: number | null`,
+  checked in `pointermove` and `finish` alike). **A genuinely new technique
+  note from this instance:** a jsdom-based unit test of this fix was
+  considered and ruled out directly, not assumed impossible —
+  `svg.createSVGPoint`, `svg.getScreenCTM` and `element.setPointerCapture`
+  are all simply absent from jsdom (confirmed with a two-line Node script,
+  not inferred from "SVG is usually bad in jsdom"), so any client-side
+  pointer-identity bug touching real SVG geometry or pointer capture isn't
+  reachable by this project's existing `spec/` layer (all HTTP-level, per
+  its own stated shape) at all — a live two-pointer `agent-browser`
+  reproduction is the only verification available, not a shortcut taken
+  because writing the jsdom test seemed like too much effort. Worth
+  re-checking this exact jsdom gap before assuming any future crit's
+  pointer/drag bug can get proper `spec/` coverage, rather than discovering
+  the gap fresh each time.
 - **Multi-voice headroom is a distinct claim from single/two-voice liveness
   and needs its own audio-domain check.** Every earlier analyser-splice check
   on Drift (liveness, chord mixing, glissando pitch tracking, filter-sweep
