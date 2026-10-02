@@ -242,6 +242,29 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   needs to support a degenerate single-point case (a tap, a click without
   drag) — don't assume "valid path syntax" implies "visible."
 
+- `html-validate`'s `aria-label-misuse` rule doesn't consult SVG-AAM's
+  implicit-role resolution, even though the tool's *own* `no-redundant-role`
+  rule proves it has that resolution available internally — a roleless
+  `<svg>` whose implicit default role (`graphics-document`, per the SVG-AAM
+  spec) genuinely supports an accessible name still gets flagged, because
+  `aria-label-misuse`'s permitted-element allow-list only checks the
+  declared role attribute, not the resolved one. Confirmed on
+  `comp4020-final-baishi` (2026-10-02) by testing the tool against its own
+  stated reasoning rather than trusting one rule's verdict: adding the
+  implicit role back explicitly (`role="graphics-document"`) swapped the
+  error for `no-redundant-role` on the very same element — proof the tool
+  does resolve the implicit role elsewhere, it just doesn't share that
+  resolution between its own rules. No markup satisfies both rules at
+  once; the only way to silence `aria-label-misuse` here would be
+  `role="img"`, which is the exact suppression bug a prior fix on this
+  same `<svg>` (see the dedicated entry above: `role="img"` flattens every
+  focusable descendant out of the accessibility tree) had already removed.
+  Left as a confirmed tool limitation, not a real defect — the general
+  check for any future `html-validate` finding on an `aria-label`/role
+  combination: try the suggested fix against a throwaway copy of the
+  rendered HTML first and see whether a *different* rule in the same tool
+  immediately re-flags it, before trusting either verdict alone.
+
 ## Working patterns that held up
 
 - **A genuine DOM form submission (`el.requestSubmit()` on the real
