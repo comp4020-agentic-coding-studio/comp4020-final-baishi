@@ -1,47 +1,40 @@
 # now
 
-## comp4020-final-baishi — deepening run, 2026-10-02, 105h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-10-03, 94h to crit-8 cutoff
 
-Ninth run on this deliverable. Re-confirmed the brief hasn't changed
-(same crit-8 "It's alive!" source as every prior run). `pnpm audit`
-clean, `pnpm outdated` unchanged (`@types/node`/`typescript` still
-major-only, correctly left alone).
+Tenth run on this deliverable. Brief unchanged (re-fetched the raw JSON
+directly this time, not just the paraphrase — confirmed the body matches
+every prior run's understanding, including the `/ship`-tags and
+ADR-citation details, which are harness/documentation mechanisms, not
+something this agent needs to act on).
 
-Worked the eighth run's own flagged candidate: a first-ever Lighthouse
-run against this repo, against the exact CI container (`docker build` +
-`docker run --tmpfs /data`, matching `.github/workflows/checks.yml`). It
-found something real: `best-practices` scored 0.96 on `/` because every
-page load logged a genuine console error for the implicit `favicon.ico`
-404 — there was no favicon at all. `/readme/` also had no meta
-description. Added a small ink-blot SVG favicon in the app's own
-light-mode palette (`public/favicon.svg`) linked from both pages'
-`<head>`, plus the missing meta description
-([`36f8174`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/36f8174)).
-Re-ran Lighthouse against a rebuilt container: both pages now score 1.0
-across all five categories. `pnpm check` green (6/6) against that same
-rebuilt container, confirmed live via `agent-browser` (favicon 200,
-console clean). One Lighthouse nag on both pages correctly left alone:
-"no compression applied" on sub-4KB HTML responses — optimising a score,
-not a real visitor experience, matching this project's existing busywork
-guard. `PROCESS.md` extended with a ninth pass
-([`1c0e06c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/1c0e06c)).
-
-Pushed (`1c0e06c`), redeployed (`flyctl deploy --remote-only --ha=false`,
-150MB image), verified live: both `/` and `/readme/` 200, favicon 200,
-console clean on the deployed app itself.
+`pnpm audit`/`outdated` still clean (same two major-only entries,
+correctly left alone). Tried a genuinely new angle: every contrast fix
+this repo has shipped (the `--link` colour, `.zone-prompt`'s fill, the
+opacity-vs-color rewrites) was measured and verified in light mode only —
+nobody had ever pointed `agent-browser set media dark` at either page,
+even though `global.css` ships a real `@media (prefers-color-scheme:
+dark)` block. Checked by hand (WCAG relative-luminance formula) and live
+against the exact CI container (`docker build` + `docker run --tmpfs
+/data`): dark-mode `--link`/`--accent` is 8.3:1 against the dark
+background, `.zone-prompt` is 7.4:1 — both comfortably clear AA. Fresh
+axe-core sweep in dark mode on both pages matched the light-mode result
+(0 violations, the one known `zone-prompt` SVG-text "incomplete"),
+console clean. No code change — a genuine "checked, confirmed correct"
+outcome, written up as PROCESS.md's tenth pass
+([`45bcd34`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/45bcd34)).
+Pushed; no redeploy (nothing behaviour-changing).
 
 ## Single most important next action
 
-Not the last run (105h remaining at this run's start — plenty of
-runway). No new self-administered angle is currently flagged — the
-clause-by-clause technique has covered `README.md`, `CLAUDE.md`, the
-Dockerfile, `checks.yml`, and `readme.astro`; the CSS-property-literacy
-lens has covered `global.css`'s one touch surface; `pnpm audit`/
-`outdated` is clean; `html-validate` is clean except the one confirmed
-tool-limitation (logged in `MEMORY.md`); Lighthouse now scores 1.0
-everywhere. A future run could just re-check `pnpm audit`/`outdated`
-again after enough time has passed, or try a fresh code read of
-`src/lib/db.ts` with fresh eyes (it's had the fewest dedicated passes of
-any source file). Only write `reflections/crit-8.md` and do the
-doctrine's finishing steps on whichever run the next prompt calls "last"
-for this cutoff.
+Not the last run (94h remaining at this run's start). This run's own
+candidate list is now exhausted the same way the ninth run's was — every
+standing technique (clause-by-clause re-derivation of README/CLAUDE/
+Dockerfile/checks.yml/readme.astro, the CSS-property-literacy lens,
+audit/outdated, html-validate, Lighthouse, axe-core, and now dark-mode
+contrast) has been tried at least once with nothing left outstanding. A
+future run could re-check `pnpm audit`/`outdated` again after enough time
+has passed, or try a fresh close read of `src/lib/db.ts`/`layout.ts`
+(the least-examined source files) one more time with fresh eyes. Only
+write `reflections/crit-8.md` and do the doctrine's finishing steps on
+whichever run the next prompt calls "last" for this cutoff.

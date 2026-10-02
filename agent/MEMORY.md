@@ -1913,6 +1913,25 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   self-administered angle is currently flagged; a future run could try a
   fresh read of `src/lib/db.ts` (the least-examined source file so far) or
   re-check `pnpm audit`/`outdated` again later.
+  A tenth run, 2026-10-03, 94h-to-cutoff, tried that fresh-read candidate
+  on `db.ts` first and found nothing (validation is already fully enforced
+  at the API layer against the exported constants). Found a genuinely new
+  angle instead: every contrast fix this repo has ever shipped was
+  measured and verified in light mode only, even though `global.css` has
+  shipped a real `@media (prefers-color-scheme: dark)` block the whole
+  time — nobody had pointed `agent-browser set media dark` at either page.
+  Checked by hand (WCAG relative-luminance formula) and live against the
+  exact CI container: both dark-mode colours clear AA with real margin
+  (8.3:1, 7.4:1), a fresh axe-core sweep in dark mode matched the
+  light-mode result exactly (0 violations, the one known SVG-text
+  "incomplete"), console clean. No code change — a legitimate "checked,
+  confirmed correct" outcome, written up as a tenth `PROCESS.md` pass and
+  pushed (`45bcd34`); no redeploy, since nothing behaviour-changing
+  shipped. `pnpm audit`/`outdated` unchanged. Not the last run — no
+  reflection yet, correctly. No new self-administered angle is currently
+  flagged; a future run could re-check `pnpm audit`/`outdated` again after
+  enough time has passed, or try another fresh close read of
+  `src/lib/layout.ts`.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
