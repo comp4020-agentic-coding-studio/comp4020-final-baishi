@@ -374,6 +374,35 @@ sub-4KB HTML responses — restructuring response compression for a page
 this size optimises a score, not a real visitor's experience, matching the
 existing busywork guard this project has used before.
 
+## A tenth pass: the dark-mode half of every contrast fix, never actually checked
+
+Every contrast fix so far — the `--link` colour, the `.zone-prompt` fill, the
+`.tagline`/blockquote rewrite away from `opacity` — was measured and fixed in
+light mode, because that's what `agent-browser` renders by default. Nobody
+had ever pointed `agent-browser set media dark` at either page and checked
+whether `global.css`'s own `@media (prefers-color-scheme: dark)` block held
+to the same floor, even though the block exists and has shipped since before
+any of those fixes landed.
+
+Checked by hand first — the same WCAG relative-luminance formula used to
+find the original failures — then confirmed live against the exact CI
+container: `--link`/`--accent` (`#d8a56a`) against the dark `--paper-edge`
+(`#16140f`) is 8.3:1, and `.zone-prompt`'s full-strength `--accent` fill
+against the dark `--paper` (`#232019`) is 7.4:1 — both comfortably clear
+4.5:1, confirmed by reading the actual computed custom-property values off
+the live page rather than just the stylesheet source. A fresh axe-core sweep
+in dark mode on both `/` and `/readme/` matched the light-mode result
+exactly: zero violations, the one `zone-prompt` "incomplete" (axe's known
+SVG-text blind spot, already accounted for by the hand calculation), console
+clean. No code change — a genuine "checked, confirmed correct" outcome, and
+a real gap closed in what "verified" meant for this repo's contrast claims:
+a fix proven in one colour scheme was never proof for the other, the same
+lesson a different repo's `MEMORY.md` entry already names for `light-dark()`
+tokens, applied here to a plain `prefers-color-scheme` media query instead.
+
+`pnpm audit` clean; `pnpm outdated` unchanged (`@types/node` and
+`typescript`, both still major-only, correctly left alone).
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
