@@ -343,6 +343,37 @@ the fresh test container, from real visits and prior runs' own test
 marks) — no drift this run, unlike the thirteenth run on a different
 repo that found exactly this kind of gap. No code change, no commit.
 
+## A ninth pass: a real sensor the prior eight hadn't tried
+
+A ninth run re-ran the cheap checks first — `pnpm audit` clean, `pnpm
+outdated` unchanged (`@types/node` and `typescript` still major-only,
+correctly left alone) — then tried the one tool the eighth run's hand-off
+had named as never yet run against this repo: Lighthouse, against the
+exact CI container (`docker build` + `docker run --tmpfs /data`, matching
+`.github/workflows/checks.yml`).
+
+It found something real: `best-practices` scored 0.96 on `/`, because
+every page load logs a genuine browser console error for the implicit
+`favicon.ico` 404 — there was no favicon at all, and nothing links one.
+The doctrine's own first finishing criterion is "no console errors," and a
+real one firing on every single page load isn't a non-issue just because
+no `pnpm check` step asserts on it. Added a small ink-blot SVG favicon in
+the app's own light-mode palette (`public/favicon.svg`, `--paper`
+background, `--ink` stroke — matching the ink-wash framing `README.md`
+already uses) and linked it from both pages' `<head>`; also added
+`/readme/`'s own missing meta description while in there, since Lighthouse
+checks for one and the page genuinely had none. Confirmed by re-running
+Lighthouse against a rebuilt container: both `/` and `/readme/` now score
+1.0 across all five categories (performance, accessibility,
+best-practices, SEO, agentic-browsing), `errors-in-console` clean. `pnpm
+check` green (6/6) against the same rebuilt container throughout.
+
+One thing Lighthouse also flags on both pages and isn't worth chasing:
+`document-latency-insight` dings "no compression applied" on these
+sub-4KB HTML responses — restructuring response compression for a page
+this size optimises a score, not a real visitor's experience, matching the
+existing busywork guard this project has used before.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
