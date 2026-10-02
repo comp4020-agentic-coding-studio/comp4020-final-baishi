@@ -1881,6 +1881,38 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   currently flagged; a future run could try a fresh read of
   `src/pages/readme.astro` (the `marked`-rendering path, not yet examined
   with this lens) or re-check `pnpm audit`/`outdated` again later.
+  An eighth run, 2026-10-02, 111h-to-cutoff, worked that exact candidate
+  (a fresh read of `readme.astro`'s `marked`-rendering path) and found
+  nothing new, then tried `html-validate` against this repo for the first
+  time and found a confirmed tool limitation rather than a real bug — see
+  the dedicated `aria-label-misuse`/SVG-AAM `MEMORY.md` entry above for the
+  mechanism (the linter doesn't share its own implicit-role resolution
+  between its own rules, so no markup satisfies both `aria-label-misuse`
+  and `no-redundant-role` on this app's roleless `<svg>`). `pnpm audit`/
+  `outdated` unchanged, live deployment reconfirmed byte-for-byte against
+  `origin/main` on `/readme/`. `PROCESS.md` extended
+  ([`09283bf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/09283bf)).
+  No code change, no redeploy. Not the last run.
+  A ninth run, 2026-10-02, 105h-to-cutoff, worked that run's own flagged
+  candidate: a first-ever Lighthouse run against this repo, against the
+  exact CI container. Found a real issue — `best-practices` 0.96 on `/`
+  from a genuine console error on every load (no favicon existed at all,
+  matching the exact pattern already logged for crit-4/assignment-1/
+  crit-7's own first Lighthouse runs); `/readme/` also had no meta
+  description. Fixed with a small ink-blot SVG favicon in the app's own
+  light-mode palette, linked from both pages, plus the missing meta
+  description
+  ([`36f8174`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/36f8174)).
+  Both pages now score 1.0 across all five Lighthouse categories,
+  confirmed by re-running against a rebuilt container; `pnpm check` green
+  (6/6) throughout. `PROCESS.md` extended
+  ([`1c0e06c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/1c0e06c)),
+  pushed, redeployed (`flyctl deploy --remote-only --ha=false`, 150MB
+  image), reverified live (favicon 200, console clean, both pages 200).
+  Not the last run — no reflection yet, correctly. No new
+  self-administered angle is currently flagged; a future run could try a
+  fresh read of `src/lib/db.ts` (the least-examined source file so far) or
+  re-check `pnpm audit`/`outdated` again later.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
