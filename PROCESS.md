@@ -295,6 +295,54 @@ end to end" scope claims to solve.
 against the exact CI container
 ([`bba04ae`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/bba04ae)).
 
+## An eighth pass: a linter that doesn't know SVG-AAM, confirmed by testing its own rule
+
+An eighth run tried the seventh run's own flagged candidate — a fresh read
+of `src/pages/readme.astro`'s `marked`-rendering path — and found nothing:
+headings nest correctly (`h1` → `h2`, no skipped levels, confirmed by
+reading the live page's outline), the link/blockquote colour fixes from
+the fourth pass are still the only overrides needed, and `marked.parse`
+runs over this repo's own `README.md`, not visitor input, so there's no
+injection surface to check.
+
+Re-ran `pnpm audit` (clean) and `pnpm outdated` (unchanged — `@types/node`
+and `typescript` are still major-only bumps, correctly left alone), then
+tried a genuinely new tool against this repo for the first time:
+`html-validate` against both live-rendered pages. `/readme/` came back
+clean; `/` flagged one thing — `aria-label-misuse` on the `<svg id="scroll">`
+element, which carries an `aria-label` but, since the second pass's fix
+([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d)),
+deliberately no `role` (removing `role="img"` was what stopped it
+suppressing the zone-hit button from the accessibility tree).
+`html-validate`'s permitted-element list for that attribute doesn't
+include SVG's implicit default role, so it flags any `aria-label` on a
+roleless `<svg>` regardless of what that implicit role actually is.
+
+Checked rather than assumed: per the SVG-AAM spec, a root `<svg>`'s
+implicit role is already `graphics-document`, which supports an accessible
+name and is in the accessibility tree specifically because it has a
+non-empty `aria-label` — so the current markup is spec-correct as is, and
+a real `agent-browser` Tab walk still reaches the link, then the zone-hit
+button, in order. Tried the obvious fix anyway, against a throwaway copy
+of the rendered HTML rather than the real app, before ruling it out:
+adding `role="graphics-document"` explicitly swaps the error for a
+different one, `no-redundant-role` — `html-validate` already resolves the
+element's implicit role to `graphics-document` internally (that's how it
+knows the role is "redundant"), it just doesn't consult that resolution
+for the `aria-label-misuse` check. There's no markup that satisfies both
+rules at once; adding `role="img"` would satisfy the linter but is exactly
+the regression `fbb528d` fixed, since `role="img"` flattens the whole
+subtree and makes the zone-hit button unreachable again. Left the markup
+as is — a tool limitation confirmed by testing the tool against its own
+stated reasoning, not a real accessibility gap, and not worth disabling a
+whole rule globally to silence one roleless-but-spec-correct `<svg>`.
+
+Verified the live deployment still matches `origin/main` byte-for-byte on
+`/readme/`, and on `/` aside from the stroke data itself (more marks than
+the fresh test container, from real visits and prior runs' own test
+marks) — no drift this run, unlike the thirteenth run on a different
+repo that found exactly this kind of gap. No code change, no commit.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
