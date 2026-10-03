@@ -1932,6 +1932,11 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   flagged; a future run could re-check `pnpm audit`/`outdated` again after
   enough time has passed, or try another fresh close read of
   `src/lib/layout.ts`.
+  An eleventh run, 2026-10-03, 87h-to-cutoff, found and fixed the
+  overpainting breach (see the dedicated entry above): `3a57fdf` (fix +
+  spec), `06a7d0c` (README/CLAUDE.md), PROCESS.md eleventh pass; deployed,
+  verified live with refused-only requests so no test mark lands on the
+  public scroll. Not the last run.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3273,6 +3278,19 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   re-checking this exact jsdom gap before assuming any future crit's
   pointer/drag bug can get proper `spec/` coverage, rather than discovering
   the gap fresh each time.
+- **"Never erased" has a second half nobody checks: never *overpainted*.**
+  On `comp4020-final-baishi`, ten runs verified "no update/delete path
+  exists" and never asked whether a new mark could land on an old one. It
+  could: `setPointerCapture` keeps a drag reporting `pointermove`s after the
+  pointer leaves the capturing element, so an ordinary over-long stroke ran
+  back across every earlier mark, and the API accepted any path string.
+  General check for any shared-canvas/append-only surface: grep for
+  `setPointerCapture` and confirm captured points are clamped to the
+  intended region, and confirm the server bounds geometry (parse the path
+  grammar strictly; for SVG `Q`/`C`, bounding control points bounds the
+  curve via the convex-hull property; allow for stroke width/halo). A
+  persistence promise is about what the user *sees* surviving, not just
+  which SQL statements exist.
 - **Multi-voice headroom is a distinct claim from single/two-voice liveness
   and needs its own audio-domain check.** Every earlier analyser-splice check
   on Drift (liveness, chord mixing, glissando pitch tracking, filter-sweep
