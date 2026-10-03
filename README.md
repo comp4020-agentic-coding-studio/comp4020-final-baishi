@@ -42,29 +42,24 @@ control, and Enter or Space leaves a dot at its centre, the same shape a
 stationary tap already produces.
 
 What's **judged, not enforced**: nothing stops a visitor from reloading and
-drawing a second mark, or a tenth. That's deliberate, not an oversight —
-enforcing "one mark per person" needs a real notion of a person, which is
-next crit's job (multi-user identity, [All at
-once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
+drawing a second mark, or a tenth. Enforcing "one mark per person" needs a
+real notion of a person, which is next crit's job (multi-user identity, [All
+at once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
 Two visitors who load the page at the same moment are offered the same blank
 strip; whoever saves second is told to reload and draw in the next one,
-rather than drawing on top of the first. That's also a next-crit problem,
-and refusing is the honest stopgap. For now the scroll trusts you the way a
-paper one would: nothing physically stops a visitor from picking up the
-brush twice, and the honesty of not doing so is part of what the piece is
-asking of you.
+rather than drawing on top of the first. Refusing is the honest stopgap
+until then. For now the scroll trusts you the way a paper one would: nothing
+stops you picking up the brush twice, and not doing so is part of what the
+piece asks of you.
 
 What I deliberately **didn't build**: accounts, undo, a gallery of past
-scrolls, likes or any other count of a mark's popularity, moderation
-tooling. Ink-wash painting tolerates the mark that goes wrong — the
-brief's own reading list points at the "small web" and "tools for one
-workshop," not a moderated platform, and a scroll that lets you take back
-a bad stroke stops being a record of what actually happened.
+scrolls, likes, moderation tooling. Ink-wash painting tolerates the mark
+that goes wrong, and a scroll that lets you take back a bad stroke stops
+being a record of what actually happened.
 
 ## What's here now
 
-This crit ships the core interaction only: one growing SVG scroll, one
-`strokes` table, one write path. It's a single visitor's experience end to
-end — draw, reload, find your mark still there — not yet the shared,
-live-updating one several people in the room at once will get. That's next
-crit's work, and this README will say more once it exists.
+The core interaction only: one growing SVG scroll, one `strokes` table, one
+write path. It's one visitor's experience end to end — draw, reload, find
+your mark still there — not yet the live one several people in the room at
+once will get. That's next crit's work.
