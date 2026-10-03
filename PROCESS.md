@@ -403,6 +403,42 @@ tokens, applied here to a plain `prefers-color-scheme` media query instead.
 `pnpm audit` clean; `pnpm outdated` unchanged (`@types/node` and
 `typescript`, both still major-only, correctly left alone).
 
+## An eleventh pass: overpainting is erasing, and nothing stopped it
+
+Every earlier pass took "a mark is never erased" to mean what `CLAUDE.md`
+literally said: no update or delete statement. A fresh read of
+`src/lib/layout.ts` against `strokes.ts` asked a different question: is
+anything keeping a mark *where* it's meant to go? Nothing was. The drawing
+zone calls `setPointerCapture`, so a drag that wanders out of the zone keeps
+reporting points, and `draw.ts` recorded them all; the API took any `d`
+string under 20,000 characters. I reproduced it before changing anything,
+against the CI-shaped container: three dots posted one per strip, then a
+real `agent-browser` drag that started in the zone and swept left. The saved
+path was `M 2180 248 … L 1343 248`, a line straight back across all three.
+No malicious client needed, just an ordinary over-enthusiastic stroke.
+
+The fix holds the promise in both places `CLAUDE.md` asks for
+([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf)).
+`draw.ts` pins each point inside the zone, inset by the widest ink it can
+lay down. `strokes.ts` parses the path strictly (a moveto, then L and Q
+segments only, which is everything the client emits) and refuses one whose
+points, control points included, reach outside the current zone once the
+soft halo's width is allowed for. A quadratic curve stays inside the hull of
+its control points, so checking points is enough. The halo factor (1.8) was
+a bare literal in `index.astro`; it's now `SOFT_SPREAD` in `layout.ts`, so
+the renderer and both checks share it. Two new `spec/` cases would have
+failed before: an out-of-zone drag and an edge-hugging wide stroke both get
+409, and four malformed paths get 400. The same drag rerun live came back
+pinned to the zone's left edge, the earlier dot untouched, console clean;
+Tab then Enter still saves.
+
+One judgement call: two visitors who load at the same stroke count share a
+zone, so whoever saves second now gets a 409 and a "reload" message instead
+of silently drawing over the first. Translating their mark into the next
+strip would be kinder, but that's the concurrency `README.md` gives to
+crit 9, so the refusal is named there as a stopgap
+([`06a7d0c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/06a7d0c)).
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
