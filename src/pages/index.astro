@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import { getAllStrokes } from "../lib/db";
-import { HEIGHT, SEGMENT, totalWidth, zoneStart } from "../lib/layout";
+import { HEIGHT, SEGMENT, SOFT_SPREAD, totalWidth, zoneStart } from "../lib/layout";
 
 const strokes = getAllStrokes();
 const count = strokes.length;
@@ -52,7 +52,7 @@ const since =
           {
             strokes.map((s) => (
               <>
-                <path d={s.d} class="ink-soft" stroke-width={s.width * 1.8} />
+                <path d={s.d} class="ink-soft" stroke-width={s.width * SOFT_SPREAD} />
                 <path d={s.d} class="ink" stroke-width={s.width} />
               </>
             ))

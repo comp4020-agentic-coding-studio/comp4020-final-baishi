@@ -30,6 +30,7 @@ export interface Stroke {
 }
 
 const insertStmt = db.prepare("INSERT INTO strokes (d, width, created_at) VALUES (?, ?, ?)");
+const countStmt = db.prepare("SELECT COUNT(*) AS n FROM strokes");
 const selectAllStmt = db.prepare(
   "SELECT id, d, width, created_at AS createdAt FROM strokes ORDER BY id ASC",
 );
@@ -39,6 +40,10 @@ const selectAllStmt = db.prepare(
 export const MAX_D_LENGTH = 20_000;
 export const MIN_WIDTH = 1;
 export const MAX_WIDTH = 40;
+
+export function countStrokes(): number {
+  return (countStmt.get() as { n: number }).n;
+}
 
 export function getAllStrokes(): Stroke[] {
   return selectAllStmt.all() as Stroke[];

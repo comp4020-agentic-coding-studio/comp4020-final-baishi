@@ -14,3 +14,18 @@ export function totalWidth(strokeCount: number): number {
 export function zoneStart(strokeCount: number): number {
   return BASE_WIDTH + strokeCount * SEGMENT;
 }
+
+// Every mark is drawn twice: a soft halo this many times wider than its core
+// stroke, then the stroke itself (see index.astro).
+export const SOFT_SPREAD = 1.8;
+
+// The box a mark's path coordinates must stay inside so its ink, halo
+// included, never reaches past its own segment into anyone else's mark.
+export function zoneBounds(
+  strokeCount: number,
+  width: number,
+): { minX: number; maxX: number; minY: number; maxY: number } {
+  const reach = (width * SOFT_SPREAD) / 2;
+  const x = zoneStart(strokeCount);
+  return { minX: x + reach, maxX: x + SEGMENT - reach, minY: reach, maxY: HEIGHT - reach };
+}

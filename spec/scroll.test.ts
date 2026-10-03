@@ -1,4 +1,5 @@
 import { expect, inject, it } from "vitest";
+import { HEIGHT, SEGMENT, zoneStart } from "../src/lib/layout";
 
 // The promise crit 8 actually checks: a mark you make is still there when
 // you come back. Exercised here exactly as a stranger would hit it — over
@@ -10,15 +11,27 @@ function markCount(html: string): number {
   return match ? Number(match[1]) : 0;
 }
 
+// The centre of the blank strip a visitor loading the page right now would
+// draw in — the only place a new mark is allowed to go.
+async function zoneCentre(): Promise<{ x: number; y: number }> {
+  const html = await fetch(new URL("/", baseUrl)).then((r) => r.text());
+  return { x: zoneStart(markCount(html)) + SEGMENT / 2, y: HEIGHT / 2 };
+}
+
+function post(body: unknown): Promise<Response> {
+  return fetch(new URL("/api/strokes", baseUrl), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 it("adding a mark increases the count reported on the page, and it survives a fresh request", async () => {
   const before = await fetch(new URL("/", baseUrl)).then((r) => r.text());
   const countBefore = markCount(before);
 
-  const res = await fetch(new URL("/api/strokes", baseUrl), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ d: "M 0 0 L 10 10", width: 6 }),
-  });
+  const { x, y } = await zoneCentre();
+  const res = await post({ d: `M ${x} ${y} L ${x + 10} ${y + 10}`, width: 6 });
   expect(res.status).toBe(201);
 
   // A second, independent request: nothing about the first request's own
@@ -46,14 +59,32 @@ it("rejects a mark with no path, and one with an out-of-range width", async () =
 it("normalises a bare tap (a moveto with no drawing command) into a paintable mark", async () => {
   // SVG renders nothing for "M x y" alone — a stray client that sent one
   // shouldn't get to save an invisible mark. See src/lib/db.ts.
-  const res = await fetch(new URL("/api/strokes", baseUrl), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ d: "M 42 42", width: 14 }),
-  });
+  const { x, y } = await zoneCentre();
+  const res = await post({ d: `M ${x} ${y}`, width: 14 });
   expect(res.status).toBe(201);
   const saved = await res.json();
   expect(saved.d).toMatch(/L/);
+});
+
+it("refuses a mark that reaches outside the blank strip, so it can't paint over earlier ones", async () => {
+  // A drag that starts in the zone and runs left across everything before it:
+  // exactly what pointer capture used to let a real drag do.
+  const { x, y } = await zoneCentre();
+  const res = await post({ d: `M ${x} ${y} L ${x - SEGMENT * 3} ${y}`, width: 6 });
+  expect(res.status).toBe(409);
+
+  // The halo counts too: a path hugging the zone's edge still bleeds over it.
+  const edge = x - SEGMENT / 2 + 1;
+  const bleed = await post({ d: `M ${edge} ${y} L ${edge} ${y}`, width: 40 });
+  expect(bleed.status).toBe(409);
+});
+
+it("refuses a path that isn't the moveto-then-segments shape the client draws", async () => {
+  const { x, y } = await zoneCentre();
+  for (const d of [`L ${x} ${y}`, `M ${x} ${y} Z`, `M ${x} ${y} L ${x}`, `M ${x} ${y} L NaN ${y}`]) {
+    const res = await post({ d, width: 6 });
+    expect(res.status, d).toBe(400);
+  }
 });
 
 it("never deletes: nothing in the app exposes a way to remove a mark", async () => {

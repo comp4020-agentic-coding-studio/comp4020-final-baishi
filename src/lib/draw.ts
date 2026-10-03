@@ -2,6 +2,8 @@
 // hands it to the server as a single SVG path plus a width. No undo, no
 // redo: see CLAUDE.md on why a mark, once lifted, is final.
 
+import { SOFT_SPREAD } from "./layout";
+
 interface Point {
   x: number;
   y: number;
@@ -19,6 +21,23 @@ function svgPoint(svg: SVGSVGElement, clientX: number, clientY: number): Point {
   const ctm = svg.getScreenCTM();
   const local = ctm ? pt.matrixTransform(ctm.inverse()) : pt;
   return { x: local.x, y: local.y, t: performance.now() };
+}
+
+// Pointer capture keeps a drag reporting after it leaves the zone, so every
+// point is pinned back inside it — inset by the widest ink this client can
+// lay down — rather than letting the mark run over earlier ones. The server
+// holds the same line (src/pages/api/strokes.ts).
+function clampToZone(zoneHit: SVGRectElement, p: Point): Point {
+  const reach = (BASE_WIDTH * SOFT_SPREAD) / 2;
+  const x = parseFloat(zoneHit.getAttribute("x") ?? "0");
+  const y = parseFloat(zoneHit.getAttribute("y") ?? "0");
+  const width = parseFloat(zoneHit.getAttribute("width") ?? "0");
+  const height = parseFloat(zoneHit.getAttribute("height") ?? "0");
+  return {
+    x: Math.min(Math.max(p.x, x + reach), x + width - reach),
+    y: Math.min(Math.max(p.y, y + reach), y + height - reach),
+    t: p.t,
+  };
 }
 
 // Turns the recorded polyline into a smooth curve: a quadratic segment per
@@ -106,13 +125,13 @@ export function initDrawing(root: ParentNode): void {
     drawingPointerId = event.pointerId;
     zoneHit.setPointerCapture(event.pointerId);
     prompt?.setAttribute("opacity", "0");
-    points = [svgPoint(svg, event.clientX, event.clientY)];
+    points = [clampToZone(zoneHit, svgPoint(svg, event.clientX, event.clientY))];
     event.preventDefault();
   });
 
   zoneHit.addEventListener("pointermove", (event) => {
     if (event.pointerId !== drawingPointerId) return;
-    const p = svgPoint(svg, event.clientX, event.clientY);
+    const p = clampToZone(zoneHit, svgPoint(svg, event.clientX, event.clientY));
     const last = points[points.length - 1];
     if (Math.hypot(p.x - last.x, p.y - last.y) < MIN_MOVE) return;
     points.push(p);
