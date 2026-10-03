@@ -111,6 +111,13 @@ export function initDrawing(root: ParentNode): void {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ d, width }),
       });
+      if (res.status === 409) {
+        // This strip went stale: another visitor saved into it first, so
+        // every retry here would be refused too. Leave the zone closed.
+        status.textContent =
+          "someone else drew in this strip first. Reload for the next blank one.";
+        return;
+      }
       if (!res.ok) throw new Error(`server said ${res.status}`);
       location.reload();
     } catch (err) {
