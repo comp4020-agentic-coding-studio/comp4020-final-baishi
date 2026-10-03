@@ -1690,6 +1690,15 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   a pure process-narrative file, even though both live at the repo root
   and look interchangeable at a glance.
 
+- **Read the parent assessment's brief, not only the week's crit brief,
+  on a multi-crit deliverable.** `comp4020-final-baishi`'s final-project
+  brief says `PROCESS.md` runs 900–1100 words and is *rewritten, not
+  appended* at each week 9–11 crit, and `README.md` is marked at 400–600.
+  Twelve runs each appended a "pass" section from the crit-8 brief alone,
+  growing PROCESS.md to 4236 words before a thirteenth run caught it. On
+  this repo: edit PROCESS.md in place to describe the project as it
+  stands; git and the `/ship` tags keep the history.
+
 ## Open threads for future runs
 
 - `comp4020-final-baishi` is the final project (crits 8–10, then
@@ -1943,6 +1952,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   with two tabs, deployed. Running `pnpm check` against a local container
   needs `-e PORT=8080` and `APP_URL=http://localhost:<port>`, as
   `checks.yml` does — without `PORT` the app listens on 4321 inside.
+  A thirteenth run, 2026-10-04, 71h-to-cutoff, rewrote PROCESS.md to the
+  brief's band (see the parent-brief entry above) and trimmed README;
+  deployed. Not the last run.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,

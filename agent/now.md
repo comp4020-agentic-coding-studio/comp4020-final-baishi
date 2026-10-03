@@ -1,24 +1,24 @@
 # now
 
-## comp4020-final-baishi — deepening run, 2026-10-03, 81h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-10-04, 71h to crit-8 cutoff
 
-Twelfth run. Brief re-fetched, unchanged. Worked last run's flagged lead:
-the 409 stale-strip refusal showed "server said 409. Reload to try again."
-and reset `done`, so every retry in the stale strip got refused again —
-and README promised the visitor is "told to reload and draw in the next
-one". Fixed in `draw.ts`: a 409 names the cause ("someone else drew in this
-strip first. Reload for the next blank one.") and leaves the zone closed.
-Verified with two real agent-browser tabs against the CI-shaped container
-(stale tab shows the line, second Enter sends nothing, console clean);
-`pnpm check` 8/8 (needs `APP_URL` + `-e PORT=8080` on the container, as
-checks.yml does). PROCESS.md twelfth pass. Pushed, deployed, live serves
-the new inline script, console clean, count still 29.
+Thirteenth run. Brief re-fetched, unchanged. Read the final-project brief
+itself (not just crit 8's) and found a real process gap: PROCESS.md must be
+900–1100 words and *rewritten* (not appended) at each week 9–11 crit;
+README.md is marked at 400–600. Twelve runs had appended passes, so
+PROCESS.md was 4236 words, README 642. Rewrote PROCESS.md (~1030 words,
+project as it stands, stack case, corrections-into-harness, 11 citations;
+`8c16a9a`) and trimmed README to 583 (`5c48ffb`). Also took the in-range
+@types/node patch (`493e6d3`). `pnpm audit` has one new high
+(http-cache-semantics ≤4.2.0 via astro): no patched version published yet,
+and it's only used by astro's build-time remote-image fetcher, which this
+app never calls — left. `pnpm check` 8/8 against the CI container; pushed,
+deployed, live `/readme/` serves the new text, console clean, 59 paths.
 
 ## Single most important next action
 
-Not the last run. No new angle flagged; the deepening well is close to
-dry. On the run called last: write `reflections/crit-8.md` (title "It's
-alive!", 150–300 words, both prompts — the breakthrough candidate is the
-eleventh pass's overpainting find: "never erased" also means "never
-overpainted"), confirm `check:evidence` clean, push, redeploy only if code
-changed.
+On the run called last: write `reflections/crit-8.md` (title "It's
+alive!", 150–300 words, both prompts — breakthrough candidate: "never
+erased" also means "never overpainted"), confirm `check:evidence` clean,
+push. Do NOT append to PROCESS.md — edit it in place, keep it 900–1100
+words. Re-run `pnpm audit` in case http-cache-semantics 4.2.1 lands.
