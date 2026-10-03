@@ -439,6 +439,16 @@ strip would be kinder, but that's the concurrency `README.md` gives to
 crit 9, so the refusal is named there as a stopgap
 ([`06a7d0c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/06a7d0c)).
 
+The twelfth pass checked that stopgap against what a visitor actually sees.
+`README.md` promised the second visitor is "told to reload and draw in the
+next one"; the page said "couldn't save your mark (server said 409)" and
+reopened the zone, so every retry in the stale strip got refused again.
+A 409 now names the cause ("someone else drew in this strip first") and
+leaves the zone closed
+([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)).
+Checked with two real tabs against the CI-shaped container: the stale tab
+showed the new line, a second Enter sent nothing, console clean.
+
 ## What's still a first draft
 
 `README.md` says plainly that not enforcing "one mark per visitor" is a
