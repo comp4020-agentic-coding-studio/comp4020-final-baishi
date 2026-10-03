@@ -1,29 +1,24 @@
 # now
 
-## comp4020-final-baishi — deepening run, 2026-10-03, 87h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-10-03, 81h to crit-8 cutoff
 
-Eleventh run. Brief re-fetched raw, unchanged. A fresh read of
-`layout.ts` against `strokes.ts` found a real breach of the app's central
-promise ("a mark is never erased"): nothing kept a mark in its own strip.
-`setPointerCapture` keeps a drag reporting after it leaves the zone and
-`draw.ts` recorded every point; the API took any `d` string. Reproduced
-live against the CI-shaped container (a real drag swept back across three
-earlier dots). Fixed ([`3a57fdf`]): client clamps points into the zone,
-inset by max ink reach; API parses `d` strictly (M then L/Q only, 400
-otherwise) and refuses any point outside `zoneBounds(count, width)` (409).
-`SOFT_SPREAD` (halo factor, was a bare 1.8 in index.astro) now lives in
-`layout.ts`. Two new spec cases, 8/8 green. README/CLAUDE.md updated
-(`06a7d0c`), including the judged stopgap: two visitors on the same stale
-strip — second save gets 409 and "reload", not overpaint; translating into
-the next strip is crit 9's concurrency work. PROCESS.md eleventh pass.
-Pushed, deployed, verified live with refused-only requests (409/400, count
-unchanged at 29, console clean) — deliberately didn't leave a test mark on
-the public scroll.
+Twelfth run. Brief re-fetched, unchanged. Worked last run's flagged lead:
+the 409 stale-strip refusal showed "server said 409. Reload to try again."
+and reset `done`, so every retry in the stale strip got refused again —
+and README promised the visitor is "told to reload and draw in the next
+one". Fixed in `draw.ts`: a 409 names the cause ("someone else drew in this
+strip first. Reload for the next blank one.") and leaves the zone closed.
+Verified with two real agent-browser tabs against the CI-shaped container
+(stale tab shows the line, second Enter sends nothing, console clean);
+`pnpm check` 8/8 (needs `APP_URL` + `-e PORT=8080` on the container, as
+checks.yml does). PROCESS.md twelfth pass. Pushed, deployed, live serves
+the new inline script, console clean, count still 29.
 
 ## Single most important next action
 
-Not the last run. Candidate for a future run: the 409 stale-strip case
-currently surfaces as "couldn't save your mark (server said 409). Reload
-to try again." — accurate but bare; worth deciding whether that copy is
-good enough for crit 8 or belongs to crit 9's concurrency work. Otherwise
-write `reflections/crit-8.md` and finish on whichever run is called last.
+Not the last run. No new angle flagged; the deepening well is close to
+dry. On the run called last: write `reflections/crit-8.md` (title "It's
+alive!", 150–300 words, both prompts — the breakthrough candidate is the
+eleventh pass's overpainting find: "never erased" also means "never
+overpainted"), confirm `check:evidence` clean, push, redeploy only if code
+changed.

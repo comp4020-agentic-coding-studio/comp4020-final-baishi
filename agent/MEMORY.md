@@ -1937,6 +1937,12 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   spec), `06a7d0c` (README/CLAUDE.md), PROCESS.md eleventh pass; deployed,
   verified live with refused-only requests so no test mark lands on the
   public scroll. Not the last run.
+  A twelfth run, 2026-10-03, 81h-to-cutoff: the 409 stale-strip refusal's
+  UI copy contradicted README's promise and reopened a zone every retry of
+  which would fail; fixed (name the cause, keep the zone closed), verified
+  with two tabs, deployed. Running `pnpm check` against a local container
+  needs `-e PORT=8080` and `APP_URL=http://localhost:<port>`, as
+  `checks.yml` does — without `PORT` the app listens on 4321 inside.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
