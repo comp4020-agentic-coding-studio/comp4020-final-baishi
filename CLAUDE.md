@@ -10,7 +10,8 @@ in either.
   delete statement, and none should be added — not even for moderation. If
   a mark ever needs removing, that's a decision to argue for in
   `README.md` first, with a real mechanism (who can, and why), not a quiet
-  admin route.
+  admin route. Overpainting is erasing too: a new mark's path, halo
+  included, stays inside its own zone (`zoneBounds` in `src/lib/layout.ts`).
 - **Never require an account to draw or to view.** Identity, when it
   arrives (crit 9), should be the minimum that makes "multi-user" true —
   an anonymous per-visit token at most — never a login.

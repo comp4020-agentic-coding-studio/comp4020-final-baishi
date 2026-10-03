@@ -32,21 +32,27 @@ look like:
   no client-side framework.
 
 What's **enforced**: a mark, once saved, is never edited or deleted (there
-is no code path that can — see `CLAUDE.md`); every write is validated
-server-side regardless of what the client sends (`spec/scroll.test.ts`);
-the page that shows the scroll works without JavaScript, since drawing is
-the only part that genuinely needs a script; and drawing itself doesn't
-require a pointer — the zone is a real focusable control, and Enter or
-Space leaves a dot at its centre, the same shape a stationary tap already
-produces.
+is no code path that can — see `CLAUDE.md`), and nor can a later one paint
+over it, since every mark has to stay inside its own strip, soft edge and
+all; every write is validated server-side regardless of what the client
+sends (`spec/scroll.test.ts`); the page that shows the scroll works without
+JavaScript, since drawing is the only part that genuinely needs a script;
+and drawing itself doesn't require a pointer — the zone is a real focusable
+control, and Enter or Space leaves a dot at its centre, the same shape a
+stationary tap already produces.
 
 What's **judged, not enforced**: nothing stops a visitor from reloading and
 drawing a second mark, or a tenth. That's deliberate, not an oversight —
 enforcing "one mark per person" needs a real notion of a person, which is
-next crit's job (multi-user identity, [All at once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
-For now the scroll trusts you the way a paper one would: nothing physically
-stops a visitor from picking up the brush twice, and the honesty of not
-doing so is part of what the piece is asking of you.
+next crit's job (multi-user identity, [All at
+once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
+Two visitors who load the page at the same moment are offered the same blank
+strip; whoever saves second is told to reload and draw in the next one,
+rather than drawing on top of the first. That's also a next-crit problem,
+and refusing is the honest stopgap. For now the scroll trusts you the way a
+paper one would: nothing physically stops a visitor from picking up the
+brush twice, and the honesty of not doing so is part of what the piece is
+asking of you.
 
 What I deliberately **didn't build**: accounts, undo, a gallery of past
 scrolls, likes or any other count of a mark's popularity, moderation
