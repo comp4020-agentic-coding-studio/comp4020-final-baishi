@@ -2,460 +2,128 @@
 
 ## From the brief to a decision
 
-The final project brief fixes three requirements — multi-user, real-time,
-persists — and leaves everything else, including what "good" means, to me.
-Crit 8 only asks for the first slice: something deployed that does its core
-thing for a stranger and keeps a trace of it. Rather than sketch a
-feature-complete plan and build a fraction of it, I picked one small,
-complete idea and built all of it: **The Scroll**, a shared ink canvas that
-only ever grows, one mark per visit, none of them ever erased.
+The final project brief fixes three requirements (multi-user, real-time,
+persists) and leaves what "good" means to me. Crit 8 asks only for proof of
+life: deployed, doing its core thing for a stranger, with a trace that's
+still there when they come back. Rather than plan a feature-complete app and
+ship a fraction of it, I picked one small idea and built all of it: **The
+Scroll**, a shared ink canvas that only ever grows, one mark per visit, none
+of them ever erased.
 
-The brief's own reading list — the small web, games for a handful of
-friends, tools built for one workshop — pointed away from the "median
-answer" it warns against (a chat room with the nouns swapped). A drawing
-surface with a hard rule against editing or deleting is small, testable,
-and has an actual position on what's worth building, argued in `README.md`
-and cited there rather than restated here.
+The brief's reading list (the small web, games for a handful of friends,
+tools for one workshop) pointed away from the "median answer" it warns
+against, a chat room with the nouns swapped. A drawing surface with a hard
+rule against editing is small, testable, and takes a position.
+`README.md` argues that position and cites what I read; this file doesn't
+restate it.
 
 ## The stack, and what it costs
 
-**Astro, server output, the Node adapter, `better-sqlite3` with no ORM.**
-The app needed exactly two rendered pages and one write endpoint — Astro's
-file-based routing gives me that with none of the routing/middleware
-boilerplate a bare Express server would need, and its server-output mode
-means every page (including `/readme/`) reads the database at request
-time, which the two static-assignment stacks earlier in the course never
-needed to do. The Node adapter's standalone mode is a single `node
-entry.mjs` process, which is what a `shared-cpu-1x`/256MB Fly machine can
-actually run.
+**Astro in server mode, the Node adapter, `better-sqlite3` with no ORM**
+([`b3e5356`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b3e5356)).
+The app is two rendered pages and one write endpoint. Astro's file routing
+gives me that without the middleware boilerplate of a bare Express server,
+and server output means `/` reads the database on every request, so the
+scroll renders with JavaScript off. The adapter's standalone mode is a
+single `node entry.mjs` process, which is what a 256MB Fly machine can run.
 
-I chose `better-sqlite3` directly over an ORM (drizzle, the obvious
-alternative) because the schema is one table
-([`src/lib/db.ts`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b3e5356)):
-a `CREATE TABLE IF NOT EXISTS` and two prepared statements say everything a
-migration tool would, without drizzle-kit's own generate/push step or its
-dependency weight. The trade-off is real — the moment this schema needs a
-second table with a foreign key, or a future crit's real-time layer needs
-transactional guarantees an ORM would make easier to get right, that
-absence will cost something. I'm taking that cost deliberately now, on the
-theory that a smaller stack is easier to reason about while the schema is
-still one table, and revisiting it explicitly (not silently) if crit 9's
-multi-user work strains it.
+Drizzle was the obvious alternative. I didn't take it because the schema is
+one table: a `CREATE TABLE IF NOT EXISTS` and two prepared statements say
+everything a migration tool would, without a generate step or the
+dependency weight. The cost is real and deferred, not avoided. When crit 9
+needs a second table for identity, or transactions around concurrent
+writes, that absence will start to hurt, and I'll write down the switch if
+I make it rather than drift into it.
 
-The build is multi-stage: `pnpm build`, then a runtime stage that installs
-only production dependencies and copies `dist/` across. I tested this exact
-path locally — `docker build` then `docker run --tmpfs /data` matching CI's
-own command — before trusting it to deploy; a build that only works via
-`pnpm dev` doesn't tell you anything about the container CI actually
-ships.
+The Dockerfile is two stages: build, then a runtime with production
+dependencies only. It originally installed `python3 make g++` with a
+comment claiming they were a fallback for `better-sqlite3`. I checked the
+package rather than the comment: it has no install script and ships
+prebuilt N-API binaries per platform, so the fallback could never run. The
+toolchain went
+([`961bafc`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/961bafc)),
+which is the README's "less technology" standard applied to the build.
 
-## How I directed and checked the work
+## How I directed the work
 
-I designed the interaction (variable-width brush from pointer speed, the
-scroll's grow-by-one-blank-segment layout, the enforced/judged split in
-`README.md`) and wrote the schema and the API's validation rules myself,
-rather than asking for "a drawing app" and accepting whatever came back —
-the brief is explicit that the agent version of that median answer is
-exactly what this project has to be better than.
+I designed the interaction (a variable-width brush from real pointer speed,
+a scroll that grows by one blank strip per mark, the enforced/judged split
+in `README.md`) and the API's validation rules myself.
+`CLAUDE.md` turns that argument into rules the agent works under: never
+update or delete a mark, never require an account, validate in the data
+layer rather than trusting `draw.ts`, keep to one table on one volume, and
+don't build crit 9's real-time layer early. Its opening line says a rule
+that doesn't trace back to a sentence in `README.md` doesn't belong in
+either file.
 
-Grounding the work meant not trusting a passing `pnpm check` as proof the
-interaction actually worked. Once the app built, I opened it in a real
-browser and drove a genuine pointer drag — mouse down, several moves, mouse
-up — rather than only exercising the HTTP API directly, because a stroke's
-shape and the smoothing math only show up under real, timed pointer
-events. That live test caught a real bug a code read hadn't:
-[`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659)
-fixes a single-tap mark (pointerdown, no movement, pointerup) that saved
-correctly but rendered as nothing, because SVG has no paintable geometry
-for a lone "M x y" with no drawing command. The fix didn't stop at the
-client that produced the bug — `CLAUDE.md`'s own rule is that the data
-layer is where a promise like "every saved mark is visible" actually has
-to hold, so `addStroke` now normalises it there too, and
-`spec/scroll.test.ts` asserts the saved path is paintable rather than
-trusting whichever client sent it. That's the shape the brief asks for:
-the correction landed in the harness (the data-layer rule, the test), not
-just in the one call site that happened to trigger it.
+## How I grounded and corrected it
 
-I also checked the built container against the actual CI/CD path rather
-than assuming `docker build` matches `flyctl deploy`: the same `docker run
--d --init -p 8080:8080 -e PORT=8080 --tmpfs /data` command
-`.github/workflows/checks.yml` runs, then `pnpm check` against that
-container specifically, not just the local dev server.
+A green `pnpm check` was never treated as proof the interaction worked.
+Every change was checked against the container CI actually builds
+(`docker build`, then `docker run --tmpfs /data` as `checks.yml` does), and
+in a real browser with real pointer and keyboard input.
 
-## A deepening pass, before the first draft cooled
+That caught the first bug a code read hadn't. A single tap saved correctly
+but rendered as nothing, because an SVG path of just `M x y` has no
+paintable geometry. The fix went into the data layer, not just the client
+that produced it: `addStroke` normalises a bare moveto, and
+`spec/scroll.test.ts` asserts every saved path is paintable
+([`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659)).
+That's the pattern I held to afterwards: a correction lands in `CLAUDE.md`
+or `spec/`, not just at the call site.
 
-A second run picked up where the first left off, rather than starting a
-new sensor battery from scratch: the first run's own hand-off named one
-open gap on purpose — the drawing zone was pointer-only, with no keyboard
-path to draw at all — and that's the first thing this run checked.
-
-It was worse than "missing a `tabindex`": the zone-hit rect sat inside an
-`<svg role="img">`, and `role="img"` suppresses any focusable descendant
-from the accessibility tree regardless of what attributes it carries — so
-adding a bare `tabindex` would have looked fixed in a code read and stayed
-broken for anyone using a screen reader. Fixed properly in
-[`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d):
-the svg's role comes off (it now holds genuine interactive content, not a
-static image), the zone becomes a real `role="button"` control, and
-Enter/Space run the exact same submit path pointer input does — a single
-dot at the zone's centre, the same shape a stationary tap already
-produces. Verified live, not just read: a real `agent-browser` Tab walk
-reached the zone in the right order (link, then zone, then end of
-document) with a visible focus outline, and a real keydown persisted a
-mark that was still there on the next request.
-
-A live axe-core sweep (not run since the first commit) turned up a real,
-if narrow, finding of its own: two elements failed AA contrast at
-2.8–2.9:1 against a 4.5:1 floor, and axe hadn't caught either — the
-tagline link's color was dimmed by its parent's `opacity`, which axe can't
-resolve, and the drawing zone's "draw here" prompt is SVG text, which axe
-reports as merely "incomplete" rather than measuring. Both only surfaced
-by computing the actual composited WCAG contrast ratio by hand and
-checking it against what axe called clean. Fixed in
-[`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac):
-neither element needed a different visual design, just a color that
-doesn't rely on `opacity` compositing to look muted, since a solid alpha
-`color` value on a text node doesn't drag the rest of the box's children
-down with it the way `opacity` does.
-
-## A third pass: dependencies and edge behaviour, nothing broken
-
-A third run worked the second run's own hand-off list rather than
-re-running the checks already exhausted. `pnpm audit` was clean; `pnpm
-outdated` had three genuinely in-range patches (`jsdom`, `vitest`,
-`@types/node`, none crossing the `^` pin in `package.json`), applied and
-re-verified against the exact CI container
-([`ea9fa14`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/ea9fa14)).
-
-Two checks came back "confirmed correct," not "found and fixed" — both
-still worth recording, since a clean result is only evidence once it's
-been actually tried. A 200%-zoom reflow check at both marking viewports
-found no page-level horizontal overflow; the drawing zone's own
-segment can partially exceed the scrollable canvas strip's width at
-that zoom on the mobile viewport, but that's consistent with the
-scroll's own design (a wide artefact meant to be panned, not a page
-meant to reflow to a fixed width) rather than a defect — the zone-hit
-control itself stays full-width and keyboard/pointer-reachable
-regardless. A real multi-mark test (two further genuine pointer drags
-against the live container, not synthetic events) confirmed the
-drawing zone shifts by exactly one segment per mark, the total width
-grows to match, and the "N marks so far, since &lt;date&gt;" line keeps
-citing the *first* mark's date as more accumulate, not the latest one.
-
-## A fourth pass: checking the fix against the rest of the file, not just itself
-
-A fourth run tried the third run's own flagged candidate — a clause-by-clause
-re-read of `README.md`/`CLAUDE.md` against the current code — and it paid off
-immediately, in a place none of the three prior passes had looked: the second
-run's own contrast fix
-([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac))
-introduced a dedicated `--link` color specifically because `--accent` alone is
-4.30:1 against the page background — under the 4.5:1 AA floor — and used it on
-`.tagline a`. It never checked `readme.astro`'s own link style, which still
-used `--accent` directly. Every hyperlink rendered from `README.md` on
-`/readme/` — the three sources cited under "What good means here," the
-crit-9 link — was under the AA floor the whole time, on the one page the crit
-calls its "real material." Fixed in
-[`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a),
-along with the same file's `blockquote` rule, which still used `opacity`
-rather than a direct color — the exact anti-pattern `874ccac` rewrote
-`.tagline` to avoid, dormant only because `README.md` has no blockquote yet.
-Confirmed live: the computed link color now reads `rgb(117, 76, 44)`
-(`--link`), and a fresh axe-core sweep of both pages still shows zero
-violations.
-
-That run also ran the other flagged candidate — a full keyboard-only
-draw-then-reload walkthrough, not the keydown-persists check the second run
-already did — against the exact CI container (`docker build` +
-`docker run --tmpfs /data`, matching `.github/workflows/checks.yml`): a real
-`agent-browser` Tab walk reached the "What this is, and why" link, then the
-drawing zone (`rect#zone-hit`, `role="button"`), a real `Enter` press left a
-mark, and a completely fresh navigation (not just the client's own
-`location.reload()`) showed the mark still there — the crit's actual "a
-stranger... finds their trace still there when they come back" bar, walked
-end to end via keyboard alone. `pnpm check` green (6/6) against that
-container throughout. Redeployed and reverified the live contrast fix.
-
-## A fifth pass: a Dockerfile comment making a claim that doesn't hold
-
-A fifth run pointed the same clause-by-clause technique at a file the first
-four had only ever run, never read critically: the Dockerfile's own
-comment, and the stack section above describing it. Both claimed
-`python3`/`make`/`g++` were there as "the fallback for when no prebuilt
-binary matches this exact node/arch (prebuild-install tries that first)."
-Checking it against the actual installed package rather than trusting the
-comment: `better-sqlite3@13.0.3` has no `install`/`postinstall` script at
-all — no `prebuild-install` step ever runs — because the package ships a
-prebuilt N-API binary for every platform/arch pair directly inside itself
-(`prebuilds/linux-x64.node` and seven siblings), selected at require-time
-by `lib/binding.js` on `process.platform`/`process.arch` alone. N-API is
-ABI-stable across Node versions, so there's no "exact node/arch" matching
-to fail in the first place on the `linux-x64` glibc image this Dockerfile
-already builds on. The fallback path the comment describes can't trigger
-here; the apt install was dead weight the whole time, directly against
-this crit's own standard ("if we can use less technology to solve any one
-task, we will," cited in `README.md`).
-
-Removed the `apt-get install` step from both stages, rebuilt with
-`--no-cache` against the exact CI command (`docker build` +
-`docker run -d --init -p 8080:8080 --tmpfs /data`), and reran `pnpm check`
-against that container — all 6 tests still green, a real `curl` POST to
-`/api/strokes` still wrote and rendered a mark. Fixed the Dockerfile
-comment and this file's own stack section, which had repeated the same
-unverified claim since the first run. No functional change to the app;
-one fewer unverified assumption in a file that gets rebuilt on every push.
-
-## A sixth pass: checking CI's own comments, then a real pointer bug
-
-A sixth run pointed the clause-by-clause technique at a file it had never
-reached: `.github/workflows/checks.yml`. Every comment there checked out
-against the files it describes — the `if` gate's claim about the repo's
-visibility, the Dockerfile/Fly parity the build-and-start step names, the
-one-machine-one-volume shape `fly.toml` documents, and the course-key
-detector's own stated reasoning against `.github/trufflehog.yml`. Nothing
-to fix; `pnpm audit`/`outdated` also came back unchanged (both entries
-still major-only).
-
-Reading `src/lib/draw.ts` fresh afterwards, rather than re-running an
-exhausted sensor battery, found a real bug: `drawing` was a plain boolean,
-not tied to which pointer was actually drawing. A stray second contact
-during a one-finger drag — a palm, a bracing finger, anything a touchscreen
-reports as its own pointer — would get its movement silently appended into
-the real stroke (`pointermove` only checked the boolean), and its own
-`pointerup` would end the drag early by calling
-`releasePointerCapture` with a pointer ID the zone never captured.
-Confirmed live with two independent synthetic `PointerEvent` sequences
-against a running container: the stray pointer's move visibly corrupted
-the preview path, and its release threw `NotFoundError` inside `finish`'s
-async body — an unhandled rejection, not a caught one, since the throw
-happens before the function's first `await`. That left `drawing` already
-false, so the real pointer's own, legitimate `pointerup` right after was a
-silent no-op: no fetch, no status update, no error shown, and `done` was
-already set at the original `pointerdown` — the zone was now permanently
-inert for the rest of that page load. A visitor's one mark, gone with no
-sign anything had gone wrong.
-
-Fixed by tracking the owning pointer ID instead of a bare flag
-([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)):
-`pointermove` and `finish` now both check `event.pointerId` against the
-one that started the drag, so a second pointer's events are inert from the
-first one. No `spec/` test covers this one: jsdom, which every HTTP-level
-test in `spec/` runs under, has no `createSVGPoint`, `getScreenCTM` or
-`setPointerCapture` at all (confirmed directly, not assumed), so a
-pointer-identity bug in `draw.ts` isn't "the kind a test can hold" the way
-`CLAUDE.md` means it — the live, two-pointer `agent-browser` reproduction
-above is the verification, re-run clean against the exact CI container
-after the fix (`pnpm check` 6/6, no rejection, the real mark still saves
-and the count still increments).
-
-## A seventh pass: a CSS lens the drawing zone hadn't had yet
-
-A seventh run worked the sixth run's own hand-off: a CSS-property-literacy
-pass on `global.css` — checking the drawing zone against mobile-browser
-touch defaults that `touch-action: none` doesn't cover, the same lens
-already applied to other crits' touch surfaces. `.zone-hit` is this app's
-one sustained-touch-drag surface (drawing is a hold-and-move gesture, same
-shape as a synth pad held for a note or a game canvas held for a drag), and
-it had neither a tap-highlight override nor protection from iOS's
-long-press callout and text-selection magnifier — both real, documented
-Chromium/WebKit defaults, not theoretical. Added
-`-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`
-and `user-select: none` to `.zone-hit`
-([`17216c8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/17216c8)).
-Unverifiable as a visual artefact
-in this sandbox (no real touch hardware, the same `xcrun simctl` gap
-logged for every other crit this pattern has come up in), so this is a
-documented-default fix rather than a screenshot-confirmed one — confirmed
-only via `getComputedStyle` showing the properties applied, and a real
-pointer drag afterwards against the exact CI container showing no
-regression (`pnpm check` 6/6, a fresh mark saved and the count
-incremented).
-
-One CSS-literacy check from the same lens came back correctly inapplicable:
-`forced-colors: active` border-loss is a real gap for a custom control that
-gets its shape from `background`/`box-shadow` rather than a `border` — this
-app's only interactive surface is `.zone-hit`, which is `fill: transparent`
-by design (its visible shape comes from the sibling `.zone-outline` SVG
-stroke, not a CSS box-shadow), so there's no background/shadow-dependent
-shape to lose.
-
-A fresh read of `src/lib/layout.ts` and `src/pages/api/strokes.ts` (the
-sixth run's other flagged candidate) found no new identity/cardinality
-bug — `strokes.ts` is a stateless, fully-validated POST handler with
-nothing to key by identity, and `layout.ts` is two pure functions. It did
-surface a real design question, already correctly scoped out: two visitors
-who load the page at the same stroke count get the same `zoneStart`, so
-simultaneous drawing from both would land in the same on-canvas segment.
-That's the concurrent-visitor case `README.md` already names as deferred
-to crit 9's real-time/multi-user work, not a bug this crit's "one visitor
-end to end" scope claims to solve.
-
-`pnpm audit` clean; `pnpm outdated` had one genuinely in-range patch
-(`vitest` 5.0.2 → 5.0.3, inside its `^` pin), applied and re-verified
-against the exact CI container
-([`bba04ae`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/bba04ae)).
-
-## An eighth pass: a linter that doesn't know SVG-AAM, confirmed by testing its own rule
-
-An eighth run tried the seventh run's own flagged candidate — a fresh read
-of `src/pages/readme.astro`'s `marked`-rendering path — and found nothing:
-headings nest correctly (`h1` → `h2`, no skipped levels, confirmed by
-reading the live page's outline), the link/blockquote colour fixes from
-the fourth pass are still the only overrides needed, and `marked.parse`
-runs over this repo's own `README.md`, not visitor input, so there's no
-injection surface to check.
-
-Re-ran `pnpm audit` (clean) and `pnpm outdated` (unchanged — `@types/node`
-and `typescript` are still major-only bumps, correctly left alone), then
-tried a genuinely new tool against this repo for the first time:
-`html-validate` against both live-rendered pages. `/readme/` came back
-clean; `/` flagged one thing — `aria-label-misuse` on the `<svg id="scroll">`
-element, which carries an `aria-label` but, since the second pass's fix
-([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d)),
-deliberately no `role` (removing `role="img"` was what stopped it
-suppressing the zone-hit button from the accessibility tree).
-`html-validate`'s permitted-element list for that attribute doesn't
-include SVG's implicit default role, so it flags any `aria-label` on a
-roleless `<svg>` regardless of what that implicit role actually is.
-
-Checked rather than assumed: per the SVG-AAM spec, a root `<svg>`'s
-implicit role is already `graphics-document`, which supports an accessible
-name and is in the accessibility tree specifically because it has a
-non-empty `aria-label` — so the current markup is spec-correct as is, and
-a real `agent-browser` Tab walk still reaches the link, then the zone-hit
-button, in order. Tried the obvious fix anyway, against a throwaway copy
-of the rendered HTML rather than the real app, before ruling it out:
-adding `role="graphics-document"` explicitly swaps the error for a
-different one, `no-redundant-role` — `html-validate` already resolves the
-element's implicit role to `graphics-document` internally (that's how it
-knows the role is "redundant"), it just doesn't consult that resolution
-for the `aria-label-misuse` check. There's no markup that satisfies both
-rules at once; adding `role="img"` would satisfy the linter but is exactly
-the regression `fbb528d` fixed, since `role="img"` flattens the whole
-subtree and makes the zone-hit button unreachable again. Left the markup
-as is — a tool limitation confirmed by testing the tool against its own
-stated reasoning, not a real accessibility gap, and not worth disabling a
-whole rule globally to silence one roleless-but-spec-correct `<svg>`.
-
-Verified the live deployment still matches `origin/main` byte-for-byte on
-`/readme/`, and on `/` aside from the stroke data itself (more marks than
-the fresh test container, from real visits and prior runs' own test
-marks) — no drift this run, unlike the thirteenth run on a different
-repo that found exactly this kind of gap. No code change, no commit.
-
-## A ninth pass: a real sensor the prior eight hadn't tried
-
-A ninth run re-ran the cheap checks first — `pnpm audit` clean, `pnpm
-outdated` unchanged (`@types/node` and `typescript` still major-only,
-correctly left alone) — then tried the one tool the eighth run's hand-off
-had named as never yet run against this repo: Lighthouse, against the
-exact CI container (`docker build` + `docker run --tmpfs /data`, matching
-`.github/workflows/checks.yml`).
-
-It found something real: `best-practices` scored 0.96 on `/`, because
-every page load logs a genuine browser console error for the implicit
-`favicon.ico` 404 — there was no favicon at all, and nothing links one.
-The doctrine's own first finishing criterion is "no console errors," and a
-real one firing on every single page load isn't a non-issue just because
-no `pnpm check` step asserts on it. Added a small ink-blot SVG favicon in
-the app's own light-mode palette (`public/favicon.svg`, `--paper`
-background, `--ink` stroke — matching the ink-wash framing `README.md`
-already uses) and linked it from both pages' `<head>`; also added
-`/readme/`'s own missing meta description while in there, since Lighthouse
-checks for one and the page genuinely had none. Confirmed by re-running
-Lighthouse against a rebuilt container: both `/` and `/readme/` now score
-1.0 across all five categories (performance, accessibility,
-best-practices, SEO, agentic-browsing), `errors-in-console` clean. `pnpm
-check` green (6/6) against the same rebuilt container throughout.
-
-One thing Lighthouse also flags on both pages and isn't worth chasing:
-`document-latency-insight` dings "no compression applied" on these
-sub-4KB HTML responses — restructuring response compression for a page
-this size optimises a score, not a real visitor's experience, matching the
-existing busywork guard this project has used before.
-
-## A tenth pass: the dark-mode half of every contrast fix, never actually checked
-
-Every contrast fix so far — the `--link` colour, the `.zone-prompt` fill, the
-`.tagline`/blockquote rewrite away from `opacity` — was measured and fixed in
-light mode, because that's what `agent-browser` renders by default. Nobody
-had ever pointed `agent-browser set media dark` at either page and checked
-whether `global.css`'s own `@media (prefers-color-scheme: dark)` block held
-to the same floor, even though the block exists and has shipped since before
-any of those fixes landed.
-
-Checked by hand first — the same WCAG relative-luminance formula used to
-find the original failures — then confirmed live against the exact CI
-container: `--link`/`--accent` (`#d8a56a`) against the dark `--paper-edge`
-(`#16140f`) is 8.3:1, and `.zone-prompt`'s full-strength `--accent` fill
-against the dark `--paper` (`#232019`) is 7.4:1 — both comfortably clear
-4.5:1, confirmed by reading the actual computed custom-property values off
-the live page rather than just the stylesheet source. A fresh axe-core sweep
-in dark mode on both `/` and `/readme/` matched the light-mode result
-exactly: zero violations, the one `zone-prompt` "incomplete" (axe's known
-SVG-text blind spot, already accounted for by the hand calculation), console
-clean. No code change — a genuine "checked, confirmed correct" outcome, and
-a real gap closed in what "verified" meant for this repo's contrast claims:
-a fix proven in one colour scheme was never proof for the other, the same
-lesson a different repo's `MEMORY.md` entry already names for `light-dark()`
-tokens, applied here to a plain `prefers-color-scheme` media query instead.
-
-`pnpm audit` clean; `pnpm outdated` unchanged (`@types/node` and
-`typescript`, both still major-only, correctly left alone).
-
-## An eleventh pass: overpainting is erasing, and nothing stopped it
-
-Every earlier pass took "a mark is never erased" to mean what `CLAUDE.md`
-literally said: no update or delete statement. A fresh read of
-`src/lib/layout.ts` against `strokes.ts` asked a different question: is
-anything keeping a mark *where* it's meant to go? Nothing was. The drawing
-zone calls `setPointerCapture`, so a drag that wanders out of the zone keeps
-reporting points, and `draw.ts` recorded them all; the API took any `d`
-string under 20,000 characters. I reproduced it before changing anything,
-against the CI-shaped container: three dots posted one per strip, then a
-real `agent-browser` drag that started in the zone and swept left. The saved
-path was `M 2180 248 … L 1343 248`, a line straight back across all three.
-No malicious client needed, just an ordinary over-enthusiastic stroke.
-
-The fix holds the promise in both places `CLAUDE.md` asks for
+The biggest correction came from re-reading my own rule. For ten passes
+"never erased" meant no update or delete statement, and that held. It
+didn't cover overpainting. The zone uses `setPointerCapture`, so an
+over-long drag kept reporting points outside it, and the API accepted any
+path. I reproduced it live (a real drag swept back across three earlier
+marks) before touching anything. The fix pins points to the zone in
+`draw.ts`, and `strokes.ts` parses the path strictly and refuses any point,
+halo included, outside the current strip. Two new spec cases would have
+failed beforehand, and `CLAUDE.md` now says overpainting is erasing
 ([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf)).
-`draw.ts` pins each point inside the zone, inset by the widest ink it can
-lay down. `strokes.ts` parses the path strictly (a moveto, then L and Q
-segments only, which is everything the client emits) and refuses one whose
-points, control points included, reach outside the current zone once the
-soft halo's width is allowed for. A quadratic curve stays inside the hull of
-its control points, so checking points is enough. The halo factor (1.8) was
-a bare literal in `index.astro`; it's now `SOFT_SPREAD` in `layout.ts`, so
-the renderer and both checks share it. Two new `spec/` cases would have
-failed before: an out-of-zone drag and an edge-hugging wide stroke both get
-409, and four malformed paths get 400. The same drag rerun live came back
-pinned to the zone's left edge, the earlier dot untouched, console clean;
-Tab then Enter still saves.
-
-One judgement call: two visitors who load at the same stroke count share a
-zone, so whoever saves second now gets a 409 and a "reload" message instead
-of silently drawing over the first. Translating their mark into the next
-strip would be kinder, but that's the concurrency `README.md` gives to
-crit 9, so the refusal is named there as a stopgap
-([`06a7d0c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/06a7d0c)).
-
-The twelfth pass checked that stopgap against what a visitor actually sees.
-`README.md` promised the second visitor is "told to reload and draw in the
-next one"; the page said "couldn't save your mark (server said 409)" and
-reopened the zone, so every retry in the stale strip got refused again.
-A 409 now names the cause ("someone else drew in this strip first") and
-leaves the zone closed
+That fix created a stale-strip refusal for two visitors loading at once.
+The first version reopened the zone and told the visitor to retry, which
+`README.md` contradicted. A 409 now names the cause and keeps the zone
+closed
 ([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)).
-Checked with two real tabs against the CI-shaped container: the stale tab
-showed the new line, a second Enter sent nothing, console clean.
 
-## What's still a first draft
+Three more fixes came from checking claims against behaviour rather than
+markup:
 
-`README.md` says plainly that not enforcing "one mark per visitor" is a
-judged decision, not an oversight — multi-user identity is crit 9's job,
-and I'd rather name that gap than quietly build ahead of the crit that's
-supposed to decide it. The same goes for real-time: this crit's "trace
-persists" bar is one visitor's own return trip, not several people watching
-the same scroll update live. Both are in `README.md`'s own "what's here
-now" section, and both are the honest scope of a first working slice, not
-things left out by accident.
+- keyboard drawing: adding `tabindex` to the zone looked fixed but wasn't,
+  because its parent `<svg role="img">` hid every descendant from assistive
+  tech. The role came off and the zone became a real button that Enter and
+  Space drive
+  ([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d))
+- contrast: axe reported zero violations while two elements sat under 3:1,
+  one dimmed by an ancestor's `opacity` and one in SVG text axe can't
+  measure. I found them by computing the ratios by hand
+  ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac)),
+  then found the same bad colour still on every `/readme/` link
+  ([`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a))
+- pointer identity: `drawing` was a boolean, so a second touch's release
+  threw inside an async handler and silently dropped the real mark
+  ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)).
+
+That last one has no spec test, deliberately. jsdom has no
+`createSVGPoint`, `getScreenCTM` or `setPointerCapture`, so the bug isn't
+"the kind a test can hold" in `CLAUDE.md`'s terms. A two-pointer browser
+reproduction, before and after, is the verification.
+
+Smaller passes added a favicon after Lighthouse flagged a console error on
+every load
+([`36f8174`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/36f8174)),
+touch-callout and tap-highlight overrides on the drawing zone
+([`17216c8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/17216c8)),
+and in-range dependency patches. Some checks came back clean and changed
+nothing: dark-mode contrast, 200% zoom, and an `html-validate` warning I
+confirmed is the tool contradicting its own rules.
+
+## What's still open
+
+Real-time sync, identity and "one mark per visitor" are next crits' scope,
+named in `README.md`, not gaps I missed. The shared-strip refusal is a
+stopgap that crit 9's concurrency decision should replace. If that decision
+needs more than one table, the no-ORM choice above gets revisited in
+writing.
