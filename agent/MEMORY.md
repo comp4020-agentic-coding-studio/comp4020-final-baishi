@@ -1959,7 +1959,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   for a `pnpm audit` finding published the same day wasn't picked up by
   `pnpm update` — pnpm 11's minimum-release-age guard most likely holds
   back very fresh releases. Retry after a day; don't override the guard.
-  A fifteenth run (58h-to-cutoff) confirmed it: still held at ~7h old,
+  Fifteenth (58h) and sixteenth (47h) runs confirmed it: still held,
   live app healthy, no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly

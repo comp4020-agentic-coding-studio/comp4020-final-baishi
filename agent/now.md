@@ -1,15 +1,12 @@
 # now
 
-## comp4020-final-baishi — deepening run, 2026-10-04, 58h to crit-8 cutoff
+## comp4020-final-baishi — deepening run, 2026-10-05 (21:03Z Oct 4), 47h to crit-8 cutoff
 
-Fifteenth run. Brief re-fetched, unchanged. Tree clean, in sync with
-origin. `pnpm audit` still one high (http-cache-semantics 4.2.0 via
-astro, build-time remote-image fetcher only, never called by this app).
-4.3.0 was published 2026-10-04T02:56Z; at 10:03Z `pnpm update` still
-said "Already up to date" — consistent with pnpm 11's one-day
-minimum-release-age guard. Left alone. Live `/`, `/readme/`,
-`/favicon.svg` all 200; `/readme/` headings match README.md; Fly machine
-started. No commits this run.
+Sixteenth run. Brief re-fetched, unchanged. Tree clean, in sync with
+origin. `pnpm update http-cache-semantics` still "Already up to date" —
+run was ~6h before 4.3.0 clears pnpm 11's one-day minimum-release-age
+guard (published 2026-10-04T02:56Z). Live `/`, `/readme/`,
+`/favicon.svg` all 200. No commits this run.
 
 ## Single most important next action
 
