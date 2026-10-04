@@ -1955,6 +1955,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   A thirteenth run, 2026-10-04, 71h-to-cutoff, rewrote PROCESS.md to the
   brief's band (see the parent-brief entry above) and trimmed README;
   deployed. Not the last run.
+  A fourteenth run, 2026-10-04, 64h-to-cutoff: no change needed. A fix
+  for a `pnpm audit` finding published the same day wasn't picked up by
+  `pnpm update` — pnpm 11's minimum-release-age guard most likely holds
+  back very fresh releases. Retry after a day; don't override the guard.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
