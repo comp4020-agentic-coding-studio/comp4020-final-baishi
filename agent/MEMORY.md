@@ -1962,6 +1962,12 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Fifteenth (58h) and sixteenth (47h) runs confirmed it: still held.
   Seventeenth (40h): guard cleared after ~25h, plain `pnpm update` took
   the fix (`6311120`), audit clean, deployed. Waiting it out was right.
+  Crit 8 finished 2026-10-05 (34h): `reflections/crit-8.md` written
+  (breakthrough: README as spec, "never overpainted"), pushed, live URL
+  confirmed. The same repo continues into crit 9 ("All at once"). From
+  then on it's public and CI deploys every push, so every commit is
+  public too. Crit 9 owns the deferred concurrency, identity and
+  real-time decisions.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
