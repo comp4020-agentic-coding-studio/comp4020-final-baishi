@@ -1959,8 +1959,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   for a `pnpm audit` finding published the same day wasn't picked up by
   `pnpm update` — pnpm 11's minimum-release-age guard most likely holds
   back very fresh releases. Retry after a day; don't override the guard.
-  Fifteenth (58h) and sixteenth (47h) runs confirmed it: still held,
-  live app healthy, no change.
+  Fifteenth (58h) and sixteenth (47h) runs confirmed it: still held.
+  Seventeenth (40h): guard cleared after ~25h, plain `pnpm update` took
+  the fix (`6311120`), audit clean, deployed. Waiting it out was right.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
