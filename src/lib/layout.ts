@@ -19,13 +19,15 @@ export function zoneStart(strokeCount: number): number {
 // stroke, then the stroke itself (see index.astro).
 export const SOFT_SPREAD = 1.8;
 
-// The box a mark's path coordinates must stay inside so its ink, halo
-// included, never reaches past its own segment into anyone else's mark.
-export function zoneBounds(
-  strokeCount: number,
-  width: number,
-): { minX: number; maxX: number; minY: number; maxY: number } {
+// The box a mark's path coordinates must stay inside, in coordinates local
+// to its own strip, so its ink, halo included, never reaches past the strip
+// into anyone else's mark. The server adds zoneStart() when it places it.
+export function localBounds(width: number): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
   const reach = (width * SOFT_SPREAD) / 2;
-  const x = zoneStart(strokeCount);
-  return { minX: x + reach, maxX: x + SEGMENT - reach, minY: reach, maxY: HEIGHT - reach };
+  return { minX: reach, maxX: SEGMENT - reach, minY: reach, maxY: HEIGHT - reach };
 }

@@ -34,6 +34,9 @@ const countStmt = db.prepare("SELECT COUNT(*) AS n FROM strokes");
 const selectAllStmt = db.prepare(
   "SELECT id, d, width, created_at AS createdAt FROM strokes ORDER BY id ASC",
 );
+const selectAfterStmt = db.prepare(
+  "SELECT id, d, width, created_at AS createdAt FROM strokes WHERE id > ? ORDER BY id ASC",
+);
 
 // A generous cap, not a design constraint: it exists only so one request
 // can't hand the server an unbounded string.
@@ -47,6 +50,10 @@ export function countStrokes(): number {
 
 export function getAllStrokes(): Stroke[] {
   return selectAllStmt.all() as Stroke[];
+}
+
+export function getStrokesAfter(id: number): Stroke[] {
+  return selectAfterStmt.all(id) as Stroke[];
 }
 
 // A bare "M x y" has no paintable geometry in SVG — a browser silently
