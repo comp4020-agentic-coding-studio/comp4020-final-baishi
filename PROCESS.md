@@ -3,127 +3,122 @@
 ## From the brief to a decision
 
 The final project brief fixes three requirements (multi-user, real-time,
-persists) and leaves what "good" means to me. Crit 8 asks only for proof of
-life: deployed, doing its core thing for a stranger, with a trace that's
-still there when they come back. Rather than plan a feature-complete app and
-ship a fraction of it, I picked one small idea and built all of it: **The
-Scroll**, a shared ink canvas that only ever grows, one mark per visit, none
-of them ever erased.
+persists) and leaves what "good" means to me. I picked one small idea and
+built all of it rather than plan a large app and ship a fraction: **The
+Scroll**, a shared ink canvas that only ever grows, one mark per visit,
+none of them ever erased. The brief's reading list pointed away from its
+"median answer", a chat room with the nouns swapped. A drawing surface with
+a hard rule against editing is small, testable, and takes a position.
+`README.md` argues that position and cites what I read.
 
-The brief's reading list (the small web, games for a handful of friends,
-tools for one workshop) pointed away from the "median answer" it warns
-against, a chat room with the nouns swapped. A drawing surface with a hard
-rule against editing is small, testable, and takes a position.
-`README.md` argues that position and cites what I read; this file doesn't
-restate it.
+Crit 8 asked for proof of life: deployed, doing its core thing, a trace
+that survives a return visit. Crit 9 asks for real-time and one recorded
+decision about several people at once.
 
 ## The stack, and what it costs
 
 **Astro in server mode, the Node adapter, `better-sqlite3` with no ORM**
-([`b3e5356`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b3e5356)).
-The app is two rendered pages and one write endpoint. Astro's file routing
-gives me that without the middleware boilerplate of a bare Express server,
-and server output means `/` reads the database on every request, so the
-scroll renders with JavaScript off. The adapter's standalone mode is a
-single `node entry.mjs` process, which is what a 256MB Fly machine can run.
+([`b3e5356`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b3e5356)). The app is two rendered pages, one write endpoint and
+now one stream. Server output means `/` reads the database on every
+request, so the scroll renders with JavaScript off, and standalone mode is
+a single `node` process that fits a 256MB Fly machine. Drizzle was the
+obvious alternative; with one table, a `CREATE TABLE IF NOT EXISTS` says
+everything a migration tool would. I'd said I would revisit that if crit 9
+needed a second table. It didn't, which is itself a result of the decision
+below.
 
-Drizzle was the obvious alternative. I didn't take it because the schema is
-one table: a `CREATE TABLE IF NOT EXISTS` and two prepared statements say
-everything a migration tool would, without a generate step or the
-dependency weight. The cost is real and deferred, not avoided. When crit 9
-needs a second table for identity, or transactions around concurrent
-writes, that absence will start to hurt, and I'll write down the switch if
-I make it rather than drift into it.
+For real-time I chose **server-sent events** over WebSockets. Updates only
+flow one way (marks out to every page); the one write is already a plain
+POST. SSE is an ordinary HTTP response, needs no library on either side,
+and the browser reconnects on its own. The bus is an in-process listener
+set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
+machine. A second machine would need a real broker, and `CLAUDE.md` says
+that's a decision to raise, not drift into.
 
-The Dockerfile is two stages: build, then a runtime with production
-dependencies only. It originally installed `python3 make g++` with a
-comment claiming they were a fallback for `better-sqlite3`. I checked the
-package rather than the comment: it has no install script and ships
-prebuilt N-API binaries per platform, so the fallback could never run. The
-toolchain went
-([`961bafc`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/961bafc)),
-which is the README's "less technology" standard applied to the build.
+The Dockerfile's `python3 make g++` came out after I checked the package
+rather than the comment beside it: `better-sqlite3` ships prebuilt N-API
+binaries and has no install script ([`961bafc`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/961bafc)).
+
+## Crit 9: the decision, before the code
+
+Crit 8 had left a stopgap. Two visitors who loaded the page together saw
+the same blank strip, and whoever saved second got a 409 and lost their
+mark ([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)). Once the scroll is live this stops being a rare
+race and becomes the normal case: a pod of five drawing in the first ten
+seconds.
+
+I wrote the decision first ([`0a7ab5d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a7ab5d)), as
+`decisions/0001-two-marks-at-once.md`, with the alternatives and their
+costs, and changed `README.md` and `CLAUDE.md` to match. **A mark's place
+is decided when it's saved, not when it's started.** Refusing the second
+mark throws away ink someone actually made, which a record of what
+happened shouldn't do. Claiming the strip while drawing would show
+presence, but it needs a second kind of state that expires when someone
+wanders off mid-stroke. Letting marks overlap breaks "never painted over".
+The cost I accepted is that your mark can land one strip to the right of
+where you drew it.
+
+The same record settles reconnection and identity without new machinery.
+Each event's id is the mark's row id, so a browser that reconnects sends
+`Last-Event-ID` and the server replays from SQLite: the database is the
+backlog. Identity stays judged rather than enforced, because an anonymous
+token is cleared by a private window and enforcing it would be theatre.
+
+The build followed in two commits. The API now takes strip-local
+coordinates and places each mark in whichever strip is blank when it
+writes, with the count and the insert in one synchronous block; `/api/stream`
+sends each mark as it lands ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)). New specs post two marks at
+the same strip concurrently and check both land, one strip apart, and
+check that a mark reaches an open stream within a second and that a
+reconnect replays what it missed. The client draws incoming marks, grows
+the paper and moves the blank strip without a reload ([`84a26f4`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/84a26f4)).
 
 ## How I directed the work
 
-I designed the interaction (a variable-width brush from real pointer speed,
-a scroll that grows by one blank strip per mark, the enforced/judged split
-in `README.md`) and the API's validation rules myself.
-`CLAUDE.md` turns that argument into rules the agent works under: never
-update or delete a mark, never require an account, validate in the data
-layer rather than trusting `draw.ts`, keep to one table on one volume, and
-don't build crit 9's real-time layer early. Its opening line says a rule
-that doesn't trace back to a sentence in `README.md` doesn't belong in
-either file.
+I designed the interaction (a variable-width brush from real pointer
+speed, a scroll that grows one strip per mark, the enforced/judged split)
+and the API's validation rules. `CLAUDE.md` turns `README.md`'s argument
+into rules: never update or delete a mark, never refuse one for arriving
+second, never require an account, validate in the data layer rather than
+trusting `draw.ts`, one table on one volume, and a new record in
+`decisions/` before any change to multi-user behaviour. A rule that
+doesn't trace back to `README.md` doesn't belong in either file.
 
 ## How I grounded and corrected it
 
 A green `pnpm check` was never treated as proof the interaction worked.
-Every change was checked against the container CI actually builds
-(`docker build`, then `docker run --tmpfs /data` as `checks.yml` does), and
-in a real browser with real pointer and keyboard input.
+Every change ran against the container CI builds (`docker build`, then
+`docker run --tmpfs /data`), and in a real browser with real pointer and
+keyboard input.
 
-That caught the first bug a code read hadn't. A single tap saved correctly
-but rendered as nothing, because an SVG path of just `M x y` has no
-paintable geometry. The fix went into the data layer, not just the client
-that produced it: `addStroke` normalises a bare moveto, and
-`spec/scroll.test.ts` asserts every saved path is paintable
-([`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659)).
-That's the pattern I held to afterwards: a correction lands in `CLAUDE.md`
-or `spec/`, not just at the call site.
+That caught this crit's bug. With two tabs open I started a drag, had
+another mark land mid-stroke, then finished it. The rest of my stroke
+pinned itself to the strip's right edge: the page's auto-follow had
+scrolled the canvas to the new end under my pointer. The fix holds
+both the strip and the scroll position still while a mark is in progress
+and catches up on release, and the same live repro now places the mark
+exactly as drawn.
 
-The biggest correction came from re-reading my own rule. For ten passes
-"never erased" meant no update or delete statement, and that held. It
-didn't cover overpainting. The zone uses `setPointerCapture`, so an
-over-long drag kept reporting points outside it, and the API accepted any
-path. I reproduced it live (a real drag swept back across three earlier
-marks) before touching anything. The fix pins points to the zone in
-`draw.ts`, and `strokes.ts` parses the path strictly and refuses any point,
-halo included, outside the current strip. Two new spec cases would have
-failed beforehand, and `CLAUDE.md` now says overpainting is erasing
-([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf)).
-That fix created a stale-strip refusal for two visitors loading at once.
-The first version reopened the zone and told the visitor to retry, which
-`README.md` contradicted. A 409 now names the cause and keeps the zone
-closed
-([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)).
+Earlier corrections followed the same pattern of checking a claim against
+behaviour:
 
-Three more fixes came from checking claims against behaviour rather than
-markup:
-
-- keyboard drawing: adding `tabindex` to the zone looked fixed but wasn't,
-  because its parent `<svg role="img">` hid every descendant from assistive
-  tech. The role came off and the zone became a real button that Enter and
-  Space drive
-  ([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d))
-- contrast: axe reported zero violations while two elements sat under 3:1,
-  one dimmed by an ancestor's `opacity` and one in SVG text axe can't
-  measure. I found them by computing the ratios by hand
-  ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac)),
-  then found the same bad colour still on every `/readme/` link
-  ([`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a))
-- pointer identity: `drawing` was a boolean, so a second touch's release
-  threw inside an async handler and silently dropped the real mark
-  ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)).
-
-That last one has no spec test, deliberately. jsdom has no
-`createSVGPoint`, `getScreenCTM` or `setPointerCapture`, so the bug isn't
-"the kind a test can hold" in `CLAUDE.md`'s terms. A two-pointer browser
-reproduction, before and after, is the verification.
-
-Smaller passes added a favicon after Lighthouse flagged a console error on
-every load
-([`36f8174`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/36f8174)),
-touch-callout and tap-highlight overrides on the drawing zone
-([`17216c8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/17216c8)),
-and in-range dependency patches. Some checks came back clean and changed
-nothing: dark-mode contrast, 200% zoom, and an `html-validate` warning I
-confirmed is the tool contradicting its own rules.
+- a single tap saved but rendered nothing, because `M x y` alone has no
+  paintable geometry; the fix went into the data layer with a spec case
+  ([`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659))
+- "never erased" had silently excluded overpainting: pointer capture let
+  an over-long drag sweep across earlier marks, so the server now bounds
+  every point, halo included ([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf))
+- keyboard drawing looked fixed but the parent `<svg role="img">` hid the
+  zone from assistive tech ([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d))
+- axe reported no violations while two elements sat under 3:1, which I
+  found by computing the ratios by hand ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac), [`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a))
+- a second touch's release threw inside an async handler and dropped the
+  real mark ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)); jsdom has no `createSVGPoint` or pointer
+  capture, so a two-pointer browser repro is the verification, not a spec.
 
 ## What's still open
 
-Real-time sync, identity and "one mark per visitor" are next crits' scope,
-named in `README.md`, not gaps I missed. The shared-strip refusal is a
-stopgap that crit 9's concurrency decision should replace. If that decision
-needs more than one table, the no-ORM choice above gets revisited in
-writing.
+Presence (who else is here) is deliberately absent: the marks arriving
+are the presence. The in-process bus holds only while Fly runs one
+machine. Crit 10's operational work will show whether the stream's
+heartbeat and Fly's auto-stop sit well together under real use.
