@@ -86,8 +86,7 @@ doesn't trace back to `README.md` doesn't belong in either file.
 
 ## How I grounded and corrected it
 
-A green `pnpm check` was never treated as proof the interaction worked.
-Every change ran against the container CI builds (`docker build`, then
+A green `pnpm check` was never proof. Every change ran against the container CI builds (`docker build`, then
 `docker run --tmpfs /data`), and in a real browser with real pointer and
 keyboard input.
 
@@ -96,11 +95,9 @@ another mark land mid-stroke, then finished it. The rest of my stroke
 pinned itself to the strip's right edge: the page's auto-follow had
 scrolled the canvas to the new end under my pointer. The fix holds
 both the strip and the scroll position still while a mark is in progress
-and catches up on release, and the same live repro now places the mark
-exactly as drawn.
+and catches up on release, and the same repro now places it as drawn.
 
-Earlier corrections followed the same pattern of checking a claim against
-behaviour:
+Other corrections, each a claim checked against behaviour:
 
 - a single tap saved but rendered nothing, because `M x y` alone has no
   paintable geometry; the fix went into the data layer with a spec case
@@ -115,10 +112,14 @@ behaviour:
 - a second touch's release threw inside an async handler and dropped the
   real mark ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)); jsdom has no `createSVGPoint` or pointer
   capture, so a two-pointer browser repro is the verification, not a spec.
+- the deployed stream, across a forced machine stop, kept
+  reconnecting, but each connection took 20 seconds to open: nothing
+  flushed the headers before the first heartbeat. The "within a second"
+  spec had been passing by luck because test files raced on one database
+  ([`a058c5a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a058c5a), [`8c8f29e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8c8f29e))
 
 ## What's still open
 
 Presence (who else is here) is deliberately absent: the marks arriving
 are the presence. The in-process bus holds only while Fly runs one
-machine. Crit 10's operational work will show whether the stream's
-heartbeat and Fly's auto-stop sit well together under real use.
+machine.
