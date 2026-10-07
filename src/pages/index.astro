@@ -45,9 +45,11 @@ const since =
           viewBox={`0 0 ${width} ${HEIGHT}`}
           width={width}
           height={HEIGHT}
+          data-count={count}
+          data-last-id={strokes.at(-1)?.id ?? 0}
           aria-label={`A shared ink scroll of ${count} mark${count === 1 ? "" : "s"} left so far, with a blank space at the end for yours`}
         >
-          <rect x="0" y="0" width={width} height={HEIGHT} class="paper" />
+          <rect id="paper" x="0" y="0" width={width} height={HEIGHT} class="paper" />
 
           {
             strokes.map((s) => (
@@ -84,7 +86,7 @@ const since =
         </svg>
       </div>
 
-      <p id="status" class="status" aria-live="polite">
+      <p id="status" class="status" aria-live="polite" data-since={since ?? ""}>
         {count === 0
           ? "Nobody has drawn yet. The blank strip at the right is where you go first."
           : `${count} mark${count === 1 ? "" : "s"} so far, since ${since}.`}
@@ -93,8 +95,13 @@ const since =
 
     <script>
       import { initDrawing } from "../lib/draw";
+      import { createLiveScroll, followStream } from "../lib/scroll";
 
-      initDrawing(document);
+      const scroll = createLiveScroll(document);
+      if (scroll) {
+        initDrawing(document, scroll);
+        followStream(scroll);
+      }
 
       const wrap = document.getElementById("canvas-wrap");
       if (wrap) wrap.scrollLeft = wrap.scrollWidth;

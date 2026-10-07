@@ -3,6 +3,7 @@
 // redo: see CLAUDE.md on why a mark, once lifted, is final.
 
 import { SOFT_SPREAD } from "./layout";
+import type { LiveScroll, StrokeData } from "./scroll";
 
 interface Point {
   x: number;
@@ -85,7 +86,7 @@ function zoneCenter(zoneHit: SVGRectElement): Point {
   return { x: x + width / 2, y: y + height / 2, t: performance.now() };
 }
 
-export function initDrawing(root: ParentNode): void {
+export function initDrawing(root: ParentNode, scroll: LiveScroll): void {
   const svg = root.querySelector<SVGSVGElement>("#scroll");
   const zoneHit = root.querySelector<SVGRectElement>("#zone-hit");
   const preview = root.querySelector<SVGPathElement>("#preview");
@@ -99,9 +100,20 @@ export function initDrawing(root: ParentNode): void {
   // drag must never move the stroke or end it early.
   let drawingPointerId: number | null = null;
   let done = false;
+  // Where the strip sat when this mark began. The zone is held there until
+  // the mark is saved, and the mark is sent relative to it: the server
+  // decides which strip it finally lands in.
+  let originX = 0;
+
+  const begin = (): void => {
+    done = true; // one mark per visit to this page; see CLAUDE.md
+    scroll.holdZone(true);
+    originX = parseFloat(zoneHit.getAttribute("x") ?? "0");
+    prompt?.setAttribute("opacity", "0");
+  };
 
   const submitMark = async (): Promise<void> => {
-    const d = smoothPath(points);
+    const d = smoothPath(points.map((p) => ({ ...p, x: p.x - originX })));
     const width = strokeWidth(points);
     status.textContent = "saving your mark…";
 
@@ -111,27 +123,32 @@ export function initDrawing(root: ParentNode): void {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ d, width }),
       });
-      if (res.status === 409) {
-        // This strip went stale: another visitor saved into it first, so
-        // every retry here would be refused too. Leave the zone closed.
-        status.textContent =
-          "someone else drew in this strip first. Reload for the next blank one.";
-        return;
-      }
       if (!res.ok) throw new Error(`server said ${res.status}`);
-      location.reload();
+      const stroke = (await res.json()) as StrokeData & { placedAt: number };
+      preview.setAttribute("d", "");
+      scroll.add(stroke);
+      scroll.holdZone(false);
+      zoneHit.setAttribute("aria-disabled", "true");
+      zoneHit.setAttribute("aria-label", "Your mark is on the scroll");
+      scroll.setNote(
+        stroke.placedAt === originX
+          ? "Your mark is on the scroll."
+          : "Someone else finished first, so your mark went in the next blank strip along.",
+      );
     } catch (err) {
-      status.textContent = `couldn't save your mark (${(err as Error).message}). Reload to try again.`;
+      preview.setAttribute("d", "");
+      scroll.holdZone(false);
+      prompt?.setAttribute("opacity", "1");
+      status.textContent = `couldn't save your mark (${(err as Error).message}). Try again.`;
       done = false;
     }
   };
 
   zoneHit.addEventListener("pointerdown", (event) => {
     if (done) return;
-    done = true; // one mark per visit to this page; see CLAUDE.md
+    begin();
     drawingPointerId = event.pointerId;
     zoneHit.setPointerCapture(event.pointerId);
-    prompt?.setAttribute("opacity", "0");
     points = [clampToZone(zoneHit, svgPoint(svg, event.clientX, event.clientY))];
     event.preventDefault();
   });
@@ -160,8 +177,7 @@ export function initDrawing(root: ParentNode): void {
     if (done || drawingPointerId !== null) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault(); // Space must not scroll the page instead
-    done = true;
-    prompt?.setAttribute("opacity", "0");
+    begin();
     points = [zoneCenter(zoneHit)];
     preview.setAttribute("d", smoothPath(points));
     preview.setAttribute("stroke-width", String(strokeWidth(points)));
