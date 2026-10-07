@@ -1,5 +1,7 @@
+import { JSDOM } from "jsdom";
 import { expect, inject, it } from "vitest";
 import { HEIGHT, SEGMENT } from "../src/lib/layout";
+import { createLiveScroll } from "../src/lib/scroll";
 
 // Crit 9's bar: a mark saved by one visitor shows up on every other open
 // page within about a second, with no reload. Checked over the same stream
@@ -101,4 +103,25 @@ it("an idle stream sends its first bytes at once, not at the first heartbeat", a
     clearTimeout(timer);
     abort.abort();
   }
+});
+
+it("the page draws a mark the stream delivers after the visitor's own later one", async () => {
+  // A visitor's POST response and the stream are separate connections: if
+  // the stream was down, or is just slower, someone else's earlier mark can
+  // arrive after the visitor's own. It still has to be drawn and counted.
+  const html = await fetch(baseUrl).then((r) => r.text());
+  const { document } = new JSDOM(html).window;
+  const scroll = createLiveScroll(document)!;
+  const before = Number(document.querySelector<SVGElement>("#scroll")!.dataset.count);
+  const last = scroll.lastId();
+  const mark = (id: number) => ({ id, d: `M ${id} 10 L ${id} 20`, width: 6 });
+
+  scroll.add(mark(last + 2)); // the visitor's own, from the POST response
+  scroll.add(mark(last + 1)); // someone else's, from the stream
+  scroll.add(mark(last + 2)); // the visitor's own again, from the stream
+
+  const drawn = [...document.querySelectorAll("#scroll path.ink")].map((p) => p.getAttribute("d"));
+  expect(drawn.filter((d) => d === mark(last + 1).d)).toHaveLength(1);
+  expect(drawn.filter((d) => d === mark(last + 2).d)).toHaveLength(1);
+  expect(document.querySelector("#status")!.textContent).toContain(`${before + 2} mark`);
 });

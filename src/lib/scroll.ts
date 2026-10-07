@@ -1,7 +1,9 @@
 // The live scroll in the browser: draws marks the server streams in, grows
 // the paper, and moves the blank strip to the new end. Marks are keyed by
 // row id, so one that arrives twice (the stream and the POST response both
-// deliver your own) is only drawn once.
+// deliver your own) is only drawn once. Ids can arrive out of order — your
+// own POST response can beat someone else's earlier mark on the stream — so
+// the page remembers each id it drew, not just the highest.
 
 import { HEIGHT, SEGMENT, SOFT_SPREAD, totalWidth, zoneStart } from "./layout";
 
@@ -33,7 +35,9 @@ export function createLiveScroll(root: Document): LiveScroll | null {
   if (!svg || !wrap || !paper || !outline || !prompt || !zoneHit || !status) return null;
 
   let count = Number(svg.dataset.count ?? 0);
-  let last = Number(svg.dataset.lastId ?? 0);
+  // Everything up to the server-rendered last id is already on the page.
+  const rendered = Number(svg.dataset.lastId ?? 0);
+  const drawn = new Set<number>();
   let since = status.dataset.since ?? "";
   let held = false;
   let note = "";
@@ -51,8 +55,8 @@ export function createLiveScroll(root: Document): LiveScroll | null {
   };
 
   const add = (stroke: StrokeData): void => {
-    if (stroke.id <= last) return;
-    last = stroke.id;
+    if (stroke.id <= rendered || drawn.has(stroke.id)) return;
+    drawn.add(stroke.id);
     count += 1;
     if (!since) {
       since = new Date().toLocaleDateString("en-AU", {
@@ -101,7 +105,7 @@ export function createLiveScroll(root: Document): LiveScroll | null {
       moveZone();
       wrap.scrollLeft = wrap.scrollWidth;
     },
-    lastId: () => last,
+    lastId: () => rendered,
     setNote(n) {
       note = n;
       renderStatus();
