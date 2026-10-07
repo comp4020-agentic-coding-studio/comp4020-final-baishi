@@ -87,3 +87,18 @@ it("a reconnecting stream replays the marks it missed, from Last-Event-ID", asyn
   const second = await waitForEvent({ "last-event-id": String(missed.id) }, "", () => true, 3000);
   expect(second.id).toBe(next.id);
 });
+
+it("an idle stream sends its first bytes at once, not at the first heartbeat", async () => {
+  // A proxy in front (Fly's) holds the headers until the body's first byte,
+  // so a silent stream looks unconnected to the page for 20 seconds.
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 1000);
+  try {
+    const res = await fetch(new URL("/api/stream?after=999999999", baseUrl), { signal: abort.signal });
+    const { value } = await res.body!.getReader().read();
+    expect(value?.length).toBeGreaterThan(0);
+  } finally {
+    clearTimeout(timer);
+    abort.abort();
+  }
+});

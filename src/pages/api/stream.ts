@@ -22,6 +22,10 @@ export const GET: APIRoute = ({ request, url }) => {
         if (closed) return;
         controller.enqueue(encoder.encode(`id: ${stroke.id}\ndata: ${JSON.stringify(stroke)}\n\n`));
       };
+      // A first line straight away: Fly's proxy holds the response headers
+      // until the body's first byte, so without it the page's EventSource
+      // sits at "connecting" until the first heartbeat.
+      controller.enqueue(encoder.encode(": open\n\n"));
       // Replay and subscribe in the same synchronous block: a write can't
       // land between them, so nothing falls in a gap.
       for (const stroke of getStrokesAfter(Number.isFinite(after) ? after : 0)) send(stroke);
