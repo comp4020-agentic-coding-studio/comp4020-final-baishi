@@ -42,15 +42,17 @@ control, and Enter or Space leaves a dot at its centre, the same shape a
 stationary tap already produces.
 
 What's **judged, not enforced**: nothing stops a visitor from reloading and
-drawing a second mark, or a tenth. Enforcing "one mark per person" needs a
-real notion of a person, which is next crit's job (multi-user identity, [All
-at once](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/09-all-at-once/)).
-Two visitors who load the page at the same moment are offered the same blank
-strip; whoever saves second is told to reload and draw in the next one,
-rather than drawing on top of the first. Refusing is the honest stopgap
-until then. For now the scroll trusts you the way a paper one would: nothing
-stops you picking up the brush twice, and not doing so is part of what the
-piece asks of you.
+drawing a second mark, or a tenth. Enforcing "one mark per person" would
+need a notion of a person, and an anonymous token is undone by a private
+window: enforcement theatre. The scroll trusts you the way a paper one
+would, and not picking up the brush twice is part of what it asks of you.
+
+What happens **when several people draw at once** is the one multi-user
+decision this app makes, recorded with its alternatives and costs in
+[`decisions/0001-two-marks-at-once.md`](decisions/0001-two-marks-at-once.md):
+a mark's place is decided when it's saved, not when it's started. If
+someone else finishes first, yours slides along to the next blank strip,
+unchanged. Nobody's mark is refused for being second.
 
 What I deliberately **didn't build**: accounts, undo, a gallery of past
 scrolls, likes, moderation tooling. Ink-wash painting tolerates the mark
@@ -59,7 +61,7 @@ being a record of what actually happened.
 
 ## What's here now
 
-The core interaction only: one growing SVG scroll, one `strokes` table, one
-write path. It's one visitor's experience end to end — draw, reload, find
-your mark still there — not yet the live one several people in the room at
-once will get. That's next crit's work.
+One growing SVG scroll, one `strokes` table, one write path, and one live
+stream: every open page sees a new mark within about a second, with no
+reload, and a page that loses its connection catches up on everything it
+missed when it reconnects.

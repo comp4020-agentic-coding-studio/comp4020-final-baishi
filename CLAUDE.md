@@ -11,10 +11,14 @@ in either.
   a mark ever needs removing, that's a decision to argue for in
   `README.md` first, with a real mechanism (who can, and why), not a quiet
   admin route. Overpainting is erasing too: a new mark's path, halo
-  included, stays inside its own zone (`zoneBounds` in `src/lib/layout.ts`).
-- **Never require an account to draw or to view.** Identity, when it
-  arrives (crit 9), should be the minimum that makes "multi-user" true —
-  an anonymous per-visit token at most — never a login.
+  included, stays inside its own strip (`localBounds` in
+  `src/lib/layout.ts`).
+- **Never refuse a mark for arriving second.** The server places each mark
+  in the blank strip at the moment it writes it, from strip-local
+  coordinates (`decisions/0001-two-marks-at-once.md`). Placement and insert
+  stay in one synchronous block, with no `await` between them.
+- **Never require an account to draw or to view.** "One mark per visit"
+  is judged, not enforced; see `README.md` before adding any identity.
 - **Never trust the client for anything `spec/` can check.** Path length,
   stroke width, request shape: validate in the data layer
   (`src/pages/api/strokes.ts`), the same place the promise is tested, not
@@ -42,12 +46,19 @@ in either.
 - Every commit that changes behaviour has a test in `spec/` that would have
   failed without it, where the behaviour is the kind a test can hold —
   see `spec/scroll.test.ts` for the shape (persistence, validation,
-  no-delete) established this crit.
+  no-delete, placement, live delivery).
 
-## Left open on purpose
+## Live updates
 
-Real-time sync, multi-user identity and rate-limiting "one mark per
-visitor" are not bugs to fix — they're next crits' scope, named as such in
-`README.md`. Don't build ahead of the crit that's supposed to decide them;
-a premature real-time layer built without the decision `README.md`
-promises to record is exactly the kind of process the brief marks down.
+- Every saved mark reaches every open page through `/api/stream`
+  (server-sent events, an in-process bus in `src/lib/live.ts`). The event
+  id is the mark's row id, and reconnects replay from SQLite after
+  `Last-Event-ID`: the database is the backlog, so don't add one.
+- The client renders marks by id and ignores ids it has already drawn; the
+  stream and the POST response can both deliver the same mark.
+
+## Decisions
+
+A change to how the app behaves with several people at once gets a new
+record in `decisions/` first, with the alternatives and their costs, and a
+line in `README.md`.
