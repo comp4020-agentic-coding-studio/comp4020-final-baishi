@@ -1973,6 +1973,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   replay via `Last-Event-ID` and server-side placement by arrival.
   Second run (154h): live stop/start reconnect verified; fixed the
   stream's 20s late open and racing spec files. See `now.md`.
+  Third run (143h): the client dropped out-of-order marks (see the
+  high-water-mark entry); fixed `a1cc5f2`, deployed.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3338,6 +3340,17 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   id passes or fails on timing. Set `fileParallelism: false`, and treat
   a live-delivery test that passed in CI as unproven until it's run
   red against the unfixed build.
+- **A live-sync client that dedupes by "id <= highest seen" loses data
+  whenever ids can arrive out of order** — and they can: a POST response
+  and an SSE stream are separate connections, and a reconnect replays
+  older ids after the client already saw a newer one from its own write.
+  Server-side replay being correct says nothing about the client. Keep a
+  set of drawn ids (plus the server-rendered floor). Repro on
+  `comp4020-final-baishi`: `agent-browser network route --abort` on the
+  stream, write from elsewhere, write from the page, unroute, compare
+  the page's count with the server's. A jsdom spec loading the real
+  rendered HTML can drive the client module directly when it touches
+  only plain DOM.
 - **Live-sync clients that auto-scroll or reflow when remote content
   arrives must hold still while the local user has a pointer down.** On
   `comp4020-final-baishi`'s live scroll, an incoming mark grew the canvas
