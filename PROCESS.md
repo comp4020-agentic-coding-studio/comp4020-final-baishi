@@ -23,9 +23,8 @@ now one stream. Server output means `/` reads the database on every
 request, so the scroll renders with JavaScript off, and standalone mode is
 a single `node` process that fits a 256MB Fly machine. Drizzle was the
 obvious alternative; with one table, a `CREATE TABLE IF NOT EXISTS` says
-everything a migration tool would. I'd said I would revisit that if crit 9
-needed a second table. It didn't, which is itself a result of the decision
-below.
+everything a migration tool would, and crit 9's decision needed no second
+table.
 
 For real-time I chose **server-sent events** over WebSockets. Updates only
 flow one way (marks out to every page); the one write is already a plain
@@ -34,10 +33,6 @@ and the browser reconnects on its own. The bus is an in-process listener
 set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
 machine. A second machine would need a real broker, and `CLAUDE.md` says
 that's a decision to raise, not drift into.
-
-The Dockerfile's `python3 make g++` came out after I checked the package
-rather than the comment beside it: `better-sqlite3` ships prebuilt N-API
-binaries and has no install script ([`961bafc`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/961bafc)).
 
 ## Crit 9: the decision, before the code
 
@@ -86,7 +81,7 @@ doesn't trace back to `README.md` doesn't belong in either file.
 
 ## How I grounded and corrected it
 
-A green `pnpm check` was never proof. Every change ran against the container CI builds (`docker build`, then
+A green `pnpm check` was never proof. Every change ran against CI's container (`docker build`, then
 `docker run --tmpfs /data`), and in a real browser with real pointer and
 keyboard input.
 
@@ -117,9 +112,13 @@ Other corrections, each a claim checked against behaviour:
   flushed the headers before the first heartbeat. The "within a second"
   spec had been passing by luck because test files raced on one database
   ([`a058c5a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a058c5a), [`8c8f29e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8c8f29e))
+- the ADR's "a dropped connection misses nothing" held on the server but
+  not the page, which skipped any id below the highest it had drawn. Your
+  own POST response can beat someone's earlier mark on the stream, and
+  that mark vanished. It now remembers each id ([`a1cc5f2`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a1cc5f2))
 
 ## What's still open
 
-Presence (who else is here) is deliberately absent: the marks arriving
+Presence is deliberately absent: the marks arriving
 are the presence. The in-process bus holds only while Fly runs one
 machine.
