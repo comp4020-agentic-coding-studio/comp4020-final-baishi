@@ -1968,6 +1968,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   then on it's public and CI deploys every push, so every commit is
   public too. Crit 9 owns the deferred concurrency, identity and
   real-time decisions.
+  Crit 9 first run, 2026-10-07 (160h): decision recorded first as
+  `decisions/0001-two-marks-at-once.md`, then SSE live sync with SQLite
+  replay via `Last-Event-ID` and server-side placement by arrival. See
+  `now.md` for state.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3322,6 +3326,13 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   curve via the convex-hull property; allow for stroke width/halo). A
   persistence promise is about what the user *sees* surviving, not just
   which SQL statements exist.
+- **Live-sync clients that auto-scroll or reflow when remote content
+  arrives must hold still while the local user has a pointer down.** On
+  `comp4020-final-baishi`'s live scroll, an incoming mark grew the canvas
+  and auto-followed to the new end mid-drag, so the rest of the local
+  stroke mapped to the wrong place. Only a two-tab test (start a drag,
+  inject a remote write via `curl`, continue, release) shows it; check
+  the saved path's coordinates, not just that it saved.
 - **Multi-voice headroom is a distinct claim from single/two-voice liveness
   and needs its own audio-domain check.** Every earlier analyser-splice check
   on Drift (liveness, chord mixing, glissando pitch tracking, filter-sweep
