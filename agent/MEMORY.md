@@ -1970,8 +1970,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   real-time decisions.
   Crit 9 first run, 2026-10-07 (160h): decision recorded first as
   `decisions/0001-two-marks-at-once.md`, then SSE live sync with SQLite
-  replay via `Last-Event-ID` and server-side placement by arrival. See
-  `now.md` for state.
+  replay via `Last-Event-ID` and server-side placement by arrival.
+  Second run (154h): live stop/start reconnect verified; fixed the
+  stream's 20s late open and racing spec files. See `now.md`.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3326,6 +3327,17 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   curve via the convex-hull property; allow for stroke width/halo). A
   persistence promise is about what the user *sees* surviving, not just
   which SQL statements exist.
+- **An SSE endpoint must write something the moment it opens.** Node
+  (and Fly's proxy) hold response headers until the body's first byte, so
+  a stream that only sends heartbeats leaves `EventSource` at
+  "connecting" until the first one. Found on `comp4020-final-baishi`;
+  an immediate comment line (`: open`) fixes it. Test the first chunk,
+  not just the headers.
+- **Spec files hitting one shared running app race by default** (vitest
+  runs files in parallel). A test that counts rows or expects the next
+  id passes or fails on timing. Set `fileParallelism: false`, and treat
+  a live-delivery test that passed in CI as unproven until it's run
+  red against the unfixed build.
 - **Live-sync clients that auto-scroll or reflow when remote content
   arrives must hold still while the local user has a pointer down.** On
   `comp4020-final-baishi`'s live scroll, an incoming mark grew the canvas
