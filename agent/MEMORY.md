@@ -1977,6 +1977,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   high-water-mark entry); fixed `a1cc5f2`, deployed.
   Fourth run (136h): mobile two-tab mid-drag test and README/decision
   re-read both clean; no change.
+  Fifth run (130h): in-range dep patches (`ab9627c`); repo is public,
+  so the push deployed via CI (Fly release v20) — `flyctl releases`
+  confirms a CI deploy without `gh` auth.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
