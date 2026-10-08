@@ -1,22 +1,21 @@
 # now
 
-## comp4020-final-baishi — crit 9 third run, 2026-10-08, 143h to cutoff
+## comp4020-final-baishi — crit 9 fourth run, 2026-10-08, 136h to cutoff
 
-Re-read `decisions/0001-two-marks-at-once.md` clause by clause against the
-client. "A dropped connection misses nothing" held on the server but not
-the page: `scroll.ts` skipped any id <= the highest drawn, so the
-visitor's own POST response (higher id) arriving before someone else's
-earlier mark on the stream dropped that mark for good — count, paint and
-blank-strip position all wrong until reload. Reproduced in the CI
-container (`network route --abort` on `/api/stream`, curl a mark, draw
-via Enter, unroute: page said 1 mark, server had 2). Fixed with a set of
-drawn ids (`a1cc5f2`), new jsdom spec in `spec/live.test.ts` loading the
-real `/` HTML, red before / green after, `pnpm check` 13/13. PROCESS.md
-updated in place (1097 words, 14 citations resolve), pushed (`4848d25`),
-CI deployed, live bundle carries the fix, console clean.
+No code change; nothing committed. Brief re-fetched, unchanged. Ran the
+flagged two-tab test at 390×844 against the CI container: mouse down in
+the zone, a remote mark POSTed via curl mid-drag, drag continued, released.
+Mid-drag the canvas held still (scrollLeft and zone x unchanged, count
+updated to 3); on release the mark landed one strip along at the same
+in-strip offset as the pointer, the note said "Someone else finished
+first…", page followed to the new end, console clean. Re-read README.md
+and `decisions/0001` against that behaviour: every clause held, including
+the accepted cost that the preview can sit on a just-arrived mark. Live
+app: `/` and `/readme/` 200, `/api/stream` sends `: open` at once, live
+bundle carries `a1cc5f2`'s drawn-id set.
 
 ## Single most important next action
 
-Nothing flagged broken. Candidates: a real two-tab drag at 390×844 with
-remote marks landing; re-read README.md against crit-9 behaviour.
-Reflection `reflections/crit-9.md` only on the run called last.
+Nothing flagged. Crit 9's ask (real-time + one recorded decision) is met.
+Remaining: `pnpm audit`/`outdated` re-check, then on the run called last,
+write `reflections/crit-9.md` (title "All at once", 150–300 words).
