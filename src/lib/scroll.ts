@@ -113,7 +113,7 @@ export function createLiveScroll(root: Document): LiveScroll | null {
   };
 }
 
-// Subscribes to every mark saved after the last one this page drew. The
+// Subscribes to every mark saved after the last one the server rendered. The
 // browser reconnects by itself after a dropped connection and resends the
 // last event id, and the server replays from there. But a reconnect answered
 // with anything other than a stream (Fly's proxy replies 502 while a deploy
