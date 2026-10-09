@@ -22,14 +22,11 @@ decision about several people at once.
 now one stream. Server output means `/` reads the database on every
 request, so the scroll renders with JavaScript off, and standalone mode is
 a single `node` process that fits a 256MB Fly machine. Drizzle was the
-obvious alternative; with one table, a `CREATE TABLE IF NOT EXISTS` says
-everything a migration tool would, and crit 9's decision needed no second
-table.
+obvious alternative, but one table needs no migration tool.
 
 For real-time I chose **server-sent events** over WebSockets. Updates only
 flow one way (marks out to every page); the one write is already a plain
-POST. SSE is an ordinary HTTP response, needs no library on either side,
-and the browser reconnects on its own. The bus is an in-process listener
+POST. SSE is an ordinary HTTP response and needs no library on either side. The bus is an in-process listener
 set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
 machine. A second machine would need a real broker, and `CLAUDE.md` says
 that's a decision to raise, not drift into.
@@ -38,9 +35,8 @@ that's a decision to raise, not drift into.
 
 Crit 8 had left a stopgap. Two visitors who loaded the page together saw
 the same blank strip, and whoever saved second got a 409 and lost their
-mark ([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)). Once the scroll is live this stops being a rare
-race and becomes the normal case: a pod of five drawing in the first ten
-seconds.
+mark ([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)). Once the scroll is live that's the normal case:
+a pod of five drawing in the first ten seconds.
 
 I wrote the decision first ([`0a7ab5d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a7ab5d)), as
 `decisions/0001-two-marks-at-once.md`, with the alternatives and their
@@ -62,10 +58,10 @@ token is cleared by a private window and enforcing it would be theatre.
 The build followed in two commits. The API now takes strip-local
 coordinates and places each mark in whichever strip is blank when it
 writes, with the count and the insert in one synchronous block; `/api/stream`
-sends each mark as it lands ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)). New specs post two marks at
-the same strip concurrently and check both land, one strip apart, and
-check that a mark reaches an open stream within a second and that a
-reconnect replays what it missed. The client draws incoming marks, grows
+sends each mark as it lands ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)). New specs check that two
+concurrent marks at the same strip both land, one strip apart, that a mark
+reaches an open stream within a second, and that a reconnect replays what
+it missed. The client draws incoming marks, grows
 the paper and moves the blank strip without a reload ([`84a26f4`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/84a26f4)).
 
 ## How I directed the work
@@ -81,8 +77,7 @@ doesn't trace back to `README.md` doesn't belong in either file.
 
 ## How I grounded and corrected it
 
-A green `pnpm check` was never proof. Every change ran against CI's container (`docker build`, then
-`docker run --tmpfs /data`), and in a real browser with real pointer and
+A green `pnpm check` was never proof. Every change ran against CI's container and in a real browser with real pointer and
 keyboard input.
 
 That caught this crit's bug. With two tabs open I started a drag, had
@@ -107,8 +102,8 @@ Other corrections, each a claim checked against behaviour:
 - a second touch's release threw inside an async handler and dropped the
   real mark ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)); jsdom has no `createSVGPoint` or pointer
   capture, so a two-pointer browser repro is the verification, not a spec.
-- the deployed stream, across a forced machine stop, kept
-  reconnecting, but each connection took 20 seconds to open: nothing
+- after a forced machine stop, each reconnection to the deployed stream
+  took 20 seconds to open: nothing
   flushed the headers before the first heartbeat. The "within a second"
   spec had been passing by luck because test files raced on one database
   ([`a058c5a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a058c5a), [`8c8f29e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8c8f29e))
@@ -116,9 +111,12 @@ Other corrections, each a claim checked against behaviour:
   not the page, which skipped any id below the highest it had drawn. Your
   own POST response can beat someone's earlier mark on the stream, and
   that mark vanished. It now remembers each id ([`a1cc5f2`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a1cc5f2))
+- the browser reconnects on its own, but not after an error reply: one
+  502 while a deploy swaps the machine closed the page's stream for good,
+  found by serving a 503 between stop and start. The page now reopens it
+  with backoff ([`632f838`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/632f838))
 
 ## What's still open
 
-Presence is deliberately absent: the marks arriving
-are the presence. The in-process bus holds only while Fly runs one
+Presence is deliberately absent: arriving marks are the presence. The in-process bus holds only while Fly runs one
 machine.

@@ -53,7 +53,9 @@ in either.
 - Every saved mark reaches every open page through `/api/stream`
   (server-sent events, an in-process bus in `src/lib/live.ts`). The event
   id is the mark's row id, and reconnects replay from SQLite after
-  `Last-Event-ID`: the database is the backlog, so don't add one.
+  `Last-Event-ID`: the database is the backlog, so don't add one. An
+  error reply to a reconnect closes the EventSource for good, so the page
+  opens a fresh one itself (`followStream` in `src/lib/scroll.ts`).
 - The client renders marks by id and ignores ids it has already drawn; the
   stream and the POST response can both deliver the same mark.
 
