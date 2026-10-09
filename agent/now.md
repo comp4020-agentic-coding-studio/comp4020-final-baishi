@@ -1,23 +1,23 @@
 # now
 
-## comp4020-final-baishi — crit 9 eighth run, 2026-10-09, 106h to cutoff
+## comp4020-final-baishi — crit 9 ninth run, 2026-10-10, 95h to cutoff
 
-Brief re-fetched, unchanged. Fly releases v24/v25 complete, live `/` and
-`/readme/` 200. `pnpm audit` clean (one in-range astro patch, 7.3.7,
-not yet taken — likely still behind pnpm's release-age guard; try next
-run). New check, all clean: fan-out under abrupt disconnects — 10 raw
-streams against a local build, 5 sockets destroyed mid-stream (and again
-between posts), 3 late joiners, 3 POSTs: every surviving viewer got all
-3 events, server survived the next heartbeat, log clean (script kept at
-`/tmp/fanout/t.mjs`; POST without an Origin header or Astro 403s it).
-Only change: `followStream`'s comment said it subscribes after the
-last mark the page drew; it asks from the server-rendered floor. Fixed,
-pushed (`80ca364`), CI release v26 complete, live 200.
+Brief re-fetched, unchanged. v26/v27 were complete. `pnpm audit` clean;
+took the in-range astro 7.3.8 patch (`7c044b4`), `pnpm check` 14/14 and
+`check:evidence` green against the CI-matching container, browser pass
+clean on `/` and `/readme/`. CI's `check` job then failed at "Build and
+start the app" (docker build), though a local `--no-cache --pull` build
+of the same commit is clean and a manual `flyctl deploy` (BuildKit on
+Fly's builders) shipped it as v28, verified live (marks render, console
+clean, both pages 200). Read as transient; logs need auth, so unconfirmed.
 
 ## Single most important next action
 
-Check `flyctl releases` first: confirm no later CI release failed.
-Take the astro 7.3.7 patch if `pnpm update` picks it
-up. On the run called last, write `reflections/crit-9.md` (title "All
-at once", 150–300 words), keep PROCESS.md 900–1100 words (at 1099: any
-addition needs a cut), push, confirm the deploy serves it.
+Check the GitHub Actions run for the next pushed commit (the harness's
+tick snapshot retriggers CI): `curl -s
+'https://api.github.com/repos/comp4020-agentic-coding-studio/comp4020-final-baishi/actions/runs?per_page=3'`
+— if `check` fails again at the docker build step, it's real and needs
+diagnosing before anything else. On the run called last, write
+`reflections/crit-9.md` (title "All at once", 150–300 words), keep
+PROCESS.md 900–1100 words (at 1099: any addition needs a cut), push,
+confirm the deploy serves it.

@@ -1986,6 +1986,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   side, redeployed by hand (v24).
   Eighth run (106h): fan-out with abrupt disconnects clean; comment
   fix only.
+  Ninth run (95h): astro 7.3.8 patch (`7c044b4`); CI's docker build
+  failed though local no-cache and Fly builds were clean; deployed by
+  hand (v28).
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3373,7 +3376,11 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   "lease currently held by Fly.io system") and leave the app 502 for
   minutes. After every push on a CI-deployed repo, check `flyctl
   releases` for `failed`; a manual `flyctl deploy --remote-only
-  --ha=false` clears the lease and ships.
+  --ha=false` clears the lease and ships. Also check the Actions run
+  itself, readable without auth: `curl -s 'https://api.github.com/repos/
+  <org>/<repo>/actions/runs?per_page=3'` for `conclusion`, then
+  `.../runs/<id>/jobs` for the failing step — a failed `check` job skips
+  `deploy`, so no failed Fly release appears at all.
 - **Live-sync clients that auto-scroll or reflow when remote content
   arrives must hold still while the local user has a pointer down.** On
   `comp4020-final-baishi`'s live scroll, an incoming mark grew the canvas
