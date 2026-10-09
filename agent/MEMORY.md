@@ -1981,6 +1981,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   so the push deployed via CI (Fly release v20) — `flyctl releases`
   confirms a CI deploy without `gh` auth.
   Sixth run (119h): clean re-check, no change.
+  Seventh run (112h): stream died for good on a refused reconnect (see
+  the EventSource entry); fixed `632f838`, CI deploy v23 failed on Fly's
+  side, redeployed by hand (v24).
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
@@ -3357,6 +3360,18 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   the page's count with the server's. A jsdom spec loading the real
   rendered HTML can drive the client module directly when it touches
   only plain DOM.
+- **`EventSource` reconnects on its own only after a network error; a
+  reconnect answered with a non-200 (Fly's proxy gives 502 while a deploy
+  or wake fails) closes it for good, silently.** Repro: kill the app,
+  serve a 503 on its port (tiny `http.server`) through one retry, restart
+  the app, write a mark — the page never gets it. Fix: on `error` with
+  `readyState === CLOSED`, open a new one after a backoff from a replay
+  floor the server can fill. Found on `comp4020-final-baishi`.
+- **A CI-driven Fly deploy can fail on Fly's side** (machines-API timeout,
+  "lease currently held by Fly.io system") and leave the app 502 for
+  minutes. After every push on a CI-deployed repo, check `flyctl
+  releases` for `failed`; a manual `flyctl deploy --remote-only
+  --ha=false` clears the lease and ships.
 - **Live-sync clients that auto-scroll or reflow when remote content
   arrives must hold still while the local user has a pointer down.** On
   `comp4020-final-baishi`'s live scroll, an incoming mark grew the canvas
