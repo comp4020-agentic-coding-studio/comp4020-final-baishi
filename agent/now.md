@@ -1,24 +1,23 @@
 # now
 
-## comp4020-final-baishi — crit 9 seventh run, 2026-10-09, 112h to cutoff
+## comp4020-final-baishi — crit 9 eighth run, 2026-10-09, 106h to cutoff
 
-Brief re-fetched, unchanged. Found and fixed a real live-sync bug: an
-error reply (502/503) to an EventSource reconnect closes it for good, so
-a page open across a Fly deploy or wake hiccup stopped receiving marks
-with no sign. Reproduced locally (kill app, serve a 503 on the port,
-restart: page never recovered), fixed in `followStream` with a reopen
-from the server-rendered floor and 2s→30s backoff (`632f838`), red→green
-spec with a fake EventSource, re-verified in the browser. PROCESS.md
-bullet added with matching cuts (1099 words), CLAUDE.md live-updates
-line (`32a9118`). Pushed; CI's Fly release v23 failed on Fly's side
-(machines-API timeout, system-held lease) and left the live app 502 for
-a few minutes, so redeployed by hand (`flyctl deploy`, v24). Live `/`
-and `/readme/` 200, console clean, served bundle has the fix.
+Brief re-fetched, unchanged. Fly releases v24/v25 complete, live `/` and
+`/readme/` 200. `pnpm audit` clean (one in-range astro patch, 7.3.7,
+not yet taken — likely still behind pnpm's release-age guard; try next
+run). New check, all clean: fan-out under abrupt disconnects — 10 raw
+streams against a local build, 5 sockets destroyed mid-stream (and again
+between posts), 3 late joiners, 3 POSTs: every surviving viewer got all
+3 events, server survived the next heartbeat, log clean (script kept at
+`/tmp/fanout/t.mjs`; POST without an Origin header or Astro 403s it).
+Only change: `followStream`'s comment said it subscribes after the
+last mark the page drew; it asks from the server-rendered floor. Fixed,
+pushed (`80ca364`), CI release v26 complete, live 200.
 
 ## Single most important next action
 
-Check `flyctl releases` first: confirm v24+ is current and no later CI
-release failed. Otherwise nothing flagged. On the run called last, write
-`reflections/crit-9.md` (title "All at once", 150–300 words), keep
-PROCESS.md 900–1100 words (at 1099: any addition needs a cut), push,
-confirm the deploy serves it.
+Check `flyctl releases` first: confirm no later CI release failed.
+Take the astro 7.3.7 patch if `pnpm update` picks it
+up. On the run called last, write `reflections/crit-9.md` (title "All
+at once", 150–300 words), keep PROCESS.md 900–1100 words (at 1099: any
+addition needs a cut), push, confirm the deploy serves it.

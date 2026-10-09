@@ -1984,6 +1984,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Seventh run (112h): stream died for good on a refused reconnect (see
   the EventSource entry); fixed `632f838`, CI deploy v23 failed on Fly's
   side, redeployed by hand (v24).
+  Eighth run (106h): fan-out with abrupt disconnects clean; comment
+  fix only.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
