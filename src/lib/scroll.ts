@@ -114,12 +114,26 @@ export function createLiveScroll(root: Document): LiveScroll | null {
 }
 
 // Subscribes to every mark saved after the last one this page drew. The
-// browser reconnects by itself and resends the last event id, and the
-// server replays from there, so a dropped connection misses nothing.
-export function followStream(scroll: LiveScroll): EventSource {
+// browser reconnects by itself after a dropped connection and resends the
+// last event id, and the server replays from there. But a reconnect answered
+// with anything other than a stream (Fly's proxy replies 502 while a deploy
+// swaps the machine) closes the EventSource for good, so the page opens a
+// fresh one itself. It asks from the server-rendered floor, so the replay
+// covers anything missed; `add` skips the marks it already drew.
+const RETRY_MS = 2000;
+const RETRY_MAX_MS = 30_000;
+
+export function followStream(scroll: LiveScroll, retryMs = RETRY_MS): void {
   const source = new EventSource(`/api/stream?after=${scroll.lastId()}`);
+  let wait = retryMs;
+  source.addEventListener("open", () => {
+    wait = RETRY_MS;
+  });
   source.addEventListener("message", (event) => {
     scroll.add(JSON.parse((event as MessageEvent<string>).data) as StrokeData);
   });
-  return source;
+  source.addEventListener("error", () => {
+    if (source.readyState !== EventSource.CLOSED) return;
+    setTimeout(() => followStream(scroll, Math.min(wait * 2, RETRY_MAX_MS)), wait);
+  });
 }

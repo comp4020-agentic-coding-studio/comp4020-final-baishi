@@ -1,7 +1,7 @@
 import { JSDOM } from "jsdom";
-import { expect, inject, it } from "vitest";
+import { expect, inject, it, vi } from "vitest";
 import { HEIGHT, SEGMENT } from "../src/lib/layout";
-import { createLiveScroll } from "../src/lib/scroll";
+import { createLiveScroll, followStream, type LiveScroll } from "../src/lib/scroll";
 
 // Crit 9's bar: a mark saved by one visitor shows up on every other open
 // page within about a second, with no reload. Checked over the same stream
@@ -124,4 +124,44 @@ it("the page draws a mark the stream delivers after the visitor's own later one"
   expect(drawn.filter((d) => d === mark(last + 1).d)).toHaveLength(1);
   expect(drawn.filter((d) => d === mark(last + 2).d)).toHaveLength(1);
   expect(document.querySelector("#status")!.textContent).toContain(`${before + 2} mark`);
+});
+
+it("the page opens a new stream when a reconnect is refused, and replays from its floor", async () => {
+  // A reconnect answered with a non-stream (Fly's proxy replies 502 during a
+  // deploy) closes an EventSource for good; the browser won't try again.
+  class FakeSource extends EventTarget {
+    static CLOSED = 2;
+    static made: FakeSource[] = [];
+    readyState = 0;
+    constructor(readonly url: string) {
+      super();
+      FakeSource.made.push(this);
+    }
+  }
+  vi.stubGlobal("EventSource", FakeSource);
+  vi.useFakeTimers();
+  try {
+    const added: number[] = [];
+    const scroll: LiveScroll = {
+      add: (s) => void added.push(s.id),
+      holdZone: () => {},
+      lastId: () => 7,
+      setNote: () => {},
+    };
+    followStream(scroll);
+
+    const refused = FakeSource.made[0];
+    refused.readyState = FakeSource.CLOSED;
+    refused.dispatchEvent(new Event("error"));
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(FakeSource.made).toHaveLength(2);
+    expect(FakeSource.made[1].url).toBe("/api/stream?after=7");
+
+    const replay = new MessageEvent("message", { data: JSON.stringify({ id: 8, d: "M 0 0 L 1 1", width: 6 }) });
+    FakeSource.made[1].dispatchEvent(replay);
+    expect(added).toEqual([8]);
+  } finally {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  }
 });
