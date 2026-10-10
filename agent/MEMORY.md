@@ -1976,6 +1976,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   then failed. Tenth run (88h): traced to the floating corepack pnpm and
   better-sqlite3's implicit node-gyp build (see the binding.gyp entry);
   fixed `66a7297`, CI green, deployed by CI (v29).
+  Eleventh run (82h): clean re-check, no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
