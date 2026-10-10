@@ -7,7 +7,10 @@
 # N-API is ABI-stable across Node versions, so there's no native
 # toolchain this image ever needs.
 FROM node:24.21.0-slim AS base
-RUN corepack enable
+# pnpm pinned to match mise.toml too: bare `corepack enable` fetches
+# whatever npm tags `latest` at build time, so the image drifts from the
+# pnpm that wrote the lockfile.
+RUN corepack enable && corepack install -g pnpm@11.9.0
 WORKDIR /app
 
 FROM base AS build
