@@ -199,34 +199,20 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   on `comp4020-final-baishi` (2026-09-30) testing the exact
   `docker build`/`docker run --tmpfs /data` sequence CI's `checks.yml` runs,
   before trusting a `flyctl deploy`.
-- **A Dockerfile comment claiming "native build toolchain needed as a
-  fallback for X" is a testable claim, not a safe default to copy —
-  inspect the actual installed package before trusting it.** On
-  `comp4020-final-baishi`, the template's own Dockerfile installed
-  `python3 make g++` in both build and runtime stages with a comment
-  saying they were "the fallback for when no prebuilt binary matches this
-  exact node/arch (prebuild-install tries that first)" for
-  `better-sqlite3`. Checked directly by inspecting the installed package
-  inside a built image: `better-sqlite3@13.0.3` has no `install`/
-  `postinstall` script at all (its `package.json` `scripts` block only has
-  `build-release`/`build-debug`/`test` — nothing npm/pnpm ever runs on
-  install) — it ships a prebuilt N-API binary for every platform/arch pair
-  directly inside the package itself (`prebuilds/linux-x64.node` and seven
-  siblings), selected at require-time by `lib/binding.js` on
-  `process.platform`/`process.arch` alone. N-API is ABI-stable across Node
-  versions, so there's no "exact node/arch" mismatch this fallback could
-  ever be needed for on the plain `linux-x64` glibc image the Dockerfile
-  already builds on. Confirmed by rebuilding `--no-cache` with the apt
-  install removed from both stages and running the exact CI command
-  (`docker build` + `docker run -d --init --tmpfs /data`): built clean, a
-  real `curl` POST round-tripped a mark, `pnpm check` green against the
-  container. The general check, worth applying to any future Node/native-
-  module Dockerfile: grep the dependency's own `package.json` for an
-  `install`/`postinstall` script and check whether it ships `prebuilds/`
-  directly, before assuming a native toolchain install is load-bearing —
-  many modern native modules (anything built on N-API, not just
-  better-sqlite3) bundle prebuilt binaries and need no toolchain on any
-  mainstream Linux/macOS/Windows target at all.
+- **A native module with a `binding.gyp` gets an implicit `node-gyp
+  rebuild` on install even with no install script** (npm and pnpm both
+  default to it), whenever its build is allowed (`allowBuilds` in
+  `pnpm-workspace.yaml`). `better-sqlite3@13` bundles `prebuilds/` and
+  loads them ahead of `build/`, so on `comp4020-final-baishi` the right
+  setting is `better-sqlite3: false`, and the image needs no Python or
+  compiler. Whether the rebuild runs also varied by pnpm version (11.9
+  ran it, 12.10 didn't), and a bare `corepack enable` fetches npm's
+  floating `latest`, so CI's docker build broke with no commit to blame.
+  Pin pnpm in the Dockerfile to `mise.toml`'s version
+  (`corepack install -g pnpm@<v>`). Local Docker here has no buildx; to
+  build with BuildKit like CI, download the buildx binary into a scratch
+  `DOCKER_CONFIG=<dir>/cli-plugins/` and run `sudo env DOCKER_CONFIG=<dir>
+  DOCKER_BUILDKIT=1 docker build`.
 - A bare SVG `<path d="M x y">` (a moveto with no drawing command at all)
   has **no paintable geometry** — Chromium renders nothing for it, even
   with `stroke-linecap: round` set, even though the path element exists in
@@ -1987,8 +1973,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Eighth run (106h): fan-out with abrupt disconnects clean; comment
   fix only.
   Ninth run (95h): astro 7.3.8 patch (`7c044b4`); CI's docker build
-  failed though local no-cache and Fly builds were clean; deployed by
-  hand (v28).
+  then failed. Tenth run (88h): traced to the floating corepack pnpm and
+  better-sqlite3's implicit node-gyp build (see the binding.gyp entry);
+  fixed `66a7297`, CI green, deployed by CI (v29).
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
