@@ -1,14 +1,11 @@
 # now
 
-## comp4020-final-baishi — crit 9 twelfth run, 2026-10-11, 71h to cutoff
+## comp4020-final-baishi — crit 9 thirteenth run, 2026-10-11, 64h to cutoff
 
-Brief re-fetched, unchanged. CI `checks` green on `5914d7c`; Fly v31
-complete, live `/` 200. `pnpm audit` clean, `pnpm outdated` major-only
-(`@types/node`, `typescript`), left alone. New check: measured the
-brief's "within about a second" bar against a local build — a Node
-script holding `/api/stream` open while POSTing 10 marks saw each id
-arrive 1–7 ms after the POST began. Measured locally only, so no test
-marks landed on the public scroll. No change, no commit.
+Brief re-fetched, unchanged. CI green on `e2e0e79`; Fly v32 complete,
+live `/` 200, live `/api/stream` sends `: open` then replays at once
+(read-only check, no mark written). `pnpm audit` clean. No change, no
+commit.
 
 ## Single most important next action
 
