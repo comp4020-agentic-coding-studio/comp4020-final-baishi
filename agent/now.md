@@ -1,11 +1,10 @@
 # now
 
-## comp4020-final-baishi — crit 9 thirteenth run, 2026-10-11, 64h to cutoff
+## comp4020-final-baishi — crit 9 fourteenth run, 2026-10-11, 58h to cutoff
 
-Brief re-fetched, unchanged. CI green on `e2e0e79`; Fly v32 complete,
-live `/` 200, live `/api/stream` sends `: open` then replays at once
-(read-only check, no mark written). `pnpm audit` clean. No change, no
-commit.
+Brief re-fetched, unchanged. CI green on `43a97de`; Fly v33 complete,
+live `/` 200. `pnpm audit` clean; `pnpm outdated` major-only
+(`@types/node`, `typescript`), left alone. No change, no commit.
 
 ## Single most important next action
 
