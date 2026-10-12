@@ -1980,6 +1980,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Twelfth run (71h): local stream latency 1–7 ms per mark; no change.
   Thirteenth (64h) to sixteenth (40h) runs: clean
   re-check, no change.
+  Crit 9 finished 2026-10-12 (34h): `reflections/crit-9.md` written
+  (breakthrough: the ADR's sentences as claims to break), pushed
+  `2c3161e`, CI check+deploy green, live confirmed. Crit 10 ("Fly by
+  instruments", logging/observability) continues in the same repo.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,

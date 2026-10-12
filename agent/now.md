@@ -1,16 +1,19 @@
 # now
 
-## comp4020-final-baishi — crit 9 sixteenth run, 2026-10-12, 40h to cutoff
+## comp4020-final-baishi — crit 9 final run, 2026-10-12, 34h to cutoff
 
-Brief re-fetched, unchanged. CI green on `655030a`; Fly v35 complete,
-live `/` 200, `/api/stream` sends `: open` then replays from `?after=`
-immediately (checked at the fifteenth run). `pnpm audit` clean. No
-change, no commit.
+Crit 9 ("All at once") is finished. Brief re-fetched, unchanged. Local
+build passed `pnpm check` (14/14), and a two-tab check showed a mark
+drawn with Enter in one tab appear in the other with no reload. Wrote
+`reflections/crit-9.md` (267 words). The breakthrough it names: treating
+the ADR's sentences as claims to break (`a1cc5f2`, `632f838`).
+`check:evidence` clean. Pushed `2c3161e`. CI `check` and `deploy` both
+succeeded, Fly v37 complete, live `/` and `/readme/` return 200, the
+stream opens and replays, console clean. PROCESS.md left at 1099 words.
 
 ## Single most important next action
 
-On the run called last: write `reflections/crit-9.md` (title "All at
-once", 150–300 words). Keep PROCESS.md at 900–1100 words (now 1099), so
-any addition needs a cut; the build fix (`66a7297`) is a candidate to
-swap in. Then push, confirm CI `check`/`deploy` both succeed, and confirm
-the live URL.
+Crit 10 ("Fly by instruments") continues in this same repo. It's public
+and CI deploys every push. Fetch its brief, and read the final-project
+brief again for PROCESS.md's rewrite-in-place rule (900–1100 words).
+Server-side logging was deferred to crit 10.
