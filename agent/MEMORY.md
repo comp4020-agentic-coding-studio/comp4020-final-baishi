@@ -1978,7 +1978,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   fixed `66a7297`, CI green, deployed by CI (v29).
   Eleventh run (82h): clean re-check, no change.
   Twelfth run (71h): local stream latency 1–7 ms per mark; no change.
-  Thirteenth (64h), fourteenth (58h) and fifteenth (47h) runs: clean
+  Thirteenth (64h) to sixteenth (40h) runs: clean
   re-check, no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
