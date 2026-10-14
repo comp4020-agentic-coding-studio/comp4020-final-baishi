@@ -1984,6 +1984,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   (breakthrough: the ADR's sentences as claims to break), pushed
   `2c3161e`, CI check+deploy green, live confirmed. Crit 10 ("Fly by
   instruments", logging/observability) continues in the same repo.
+  Crit 10 first run, 2026-10-14 (160h): identity as a browser cookie
+  (ADR 0002), `mine` decided per requester, seal on your own marks,
+  logfmt logs of who did what; CI-deployed v40. See `now.md`.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
