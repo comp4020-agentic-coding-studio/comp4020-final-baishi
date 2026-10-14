@@ -38,25 +38,28 @@ all; every write is validated server-side regardless of what the client
 sends (`spec/scroll.test.ts`); the page that shows the scroll works without
 JavaScript, since drawing is the only part that genuinely needs a script;
 and drawing itself doesn't require a pointer — the zone is a real focusable
-control, and Enter or Space leaves a dot at its centre, the same shape a
-stationary tap already produces.
+control, and Enter or Space leaves a dot at its centre.
 
-What's **judged, not enforced**: nothing stops a visitor from reloading and
-drawing a second mark, or a tenth. Enforcing "one mark per person" would
-need a notion of a person, and an anonymous token is undone by a private
-window: enforcement theatre. The scroll trusts you the way a paper one
-would, and not picking up the brush twice is part of what it asks of you.
+What's **judged, not enforced**: nothing stops you reloading and drawing a
+second mark, or a tenth. The app knows your browser, but a private window
+is a new browser, so enforcing "one mark per person" would be theatre. The
+scroll trusts you the way a paper one would.
 
-What happens **when several people draw at once** is the one multi-user
-decision this app makes, recorded with its alternatives and costs in
+**Who you are** is your browser
+([`decisions/0002-a-person-is-a-browser.md`](decisions/0002-a-person-is-a-browser.md)).
+The app tells visitors apart by an anonymous cookie, logs who drew what,
+and shows you, and only you, a small red seal on your own marks. Nobody
+can change any mark, their own included.
+
+What happens **when several people draw at once** is recorded in
 [`decisions/0001-two-marks-at-once.md`](decisions/0001-two-marks-at-once.md):
 a mark's place is decided when it's saved, not when it's started. If
 someone else finishes first, yours slides along to the next blank strip,
 unchanged. Nobody's mark is refused for being second.
 
-What I deliberately **didn't build**: accounts, undo, a gallery of past
-scrolls, likes, moderation tooling. Ink-wash painting tolerates the mark
-that goes wrong, and a scroll that lets you take back a bad stroke stops
+What I deliberately **didn't build**: accounts, names under marks, undo,
+a gallery of past scrolls, likes, moderation tooling. Ink-wash painting
+tolerates the mark that goes wrong, and a scroll that lets you take back a bad stroke stops
 being a record of what actually happened.
 
 ## What's here now

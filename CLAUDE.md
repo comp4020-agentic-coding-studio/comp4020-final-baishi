@@ -17,8 +17,14 @@ in either.
   in the blank strip at the moment it writes it, from strip-local
   coordinates (`decisions/0001-two-marks-at-once.md`). Placement and insert
   stay in one synchronous block, with no `await` between them.
-- **Never require an account to draw or to view.** "One mark per visit"
-  is judged, not enforced; see `README.md` before adding any identity.
+- **Never require an account to draw or to view.** A person is a browser:
+  an anonymous `HttpOnly` cookie, set in `src/middleware.ts`
+  (`decisions/0002-a-person-is-a-browser.md`). "One mark per visit" stays
+  judged, not enforced.
+- **Never let one visitor see or claim another's identity.** A mark's
+  owner comes from the request's cookie, never the body. Responses carry
+  `mine`, decided per requester by `toPublic` in `src/lib/db.ts`, and
+  never a visitor hash or label other than the requester's own.
 - **Never trust the client for anything `spec/` can check.** Path length,
   stroke width, request shape: validate in the data layer
   (`src/pages/api/strokes.ts`), the same place the promise is tested, not
@@ -58,6 +64,14 @@ in either.
   opens a fresh one itself (`followStream` in `src/lib/scroll.ts`).
 - The client renders marks by id and ignores ids it has already drawn; the
   stream and the POST response can both deliver the same mark.
+
+## Logs
+
+- Every view, stream open/close, saved mark and refused mark logs one
+  logfmt line through `log` in `src/lib/visitor.ts`, with the visitor
+  label, so `flyctl logs` says who did what. Never log the token, an IP
+  address, or a path's contents. A new kind of action gets a log line in
+  the same change.
 
 ## Decisions
 
