@@ -11,9 +11,10 @@ none of them ever erased. The brief's reading list pointed away from its
 a hard rule against editing is small, testable, and takes a position.
 `README.md` argues that position and cites what I read.
 
-Crit 8 asked for proof of life: deployed, doing its core thing, a trace
-that survives a return visit. Crit 9 asks for real-time and one recorded
-decision about several people at once.
+Crit 8 asked for proof of life, crit 9 for real-time and one recorded
+decision about several people at once, and crit 10 for telling people
+apart, with the rules checked on the server and the logs saying who did
+what.
 
 ## The stack, and what it costs
 
@@ -33,90 +34,90 @@ that's a decision to raise, not drift into.
 
 ## Crit 9: the decision, before the code
 
-Crit 8 had left a stopgap. Two visitors who loaded the page together saw
-the same blank strip, and whoever saved second got a 409 and lost their
-mark ([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)). Once the scroll is live that's the normal case:
-a pod of five drawing in the first ten seconds.
+Crit 8 left a stopgap: two visitors who loaded the page together saw the
+same blank strip, and whoever saved second got a 409 and lost their mark
+([`070af85`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/070af85)). With the scroll live, that's a pod
+of five in its first ten seconds. I wrote the decision first
+([`0a7ab5d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a7ab5d)), as
+`decisions/0001-two-marks-at-once.md`: **a mark's place is decided when
+it's saved, not when it's started.** Refusing the second mark throws away
+ink; claiming the strip while drawing needs state that expires; letting
+marks overlap breaks "never painted over". The cost is that your mark can
+land one strip along. Each stream event's id is the mark's row id, so a
+reconnect replays from SQLite: the database is the backlog. The build
+placed marks by arrival ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)) and drew
+incoming marks without a reload ([`84a26f4`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/84a26f4)).
 
-I wrote the decision first ([`0a7ab5d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a7ab5d)), as
-`decisions/0001-two-marks-at-once.md`, with the alternatives and their
-costs, and changed `README.md` and `CLAUDE.md` to match. **A mark's place
-is decided when it's saved, not when it's started.** Refusing the second
-mark throws away ink someone actually made, which a record of what
-happened shouldn't do. Claiming the strip while drawing would show
-presence, but it needs a second kind of state that expires when someone
-wanders off mid-stroke. Letting marks overlap breaks "never painted over".
-The cost I accepted is that your mark can land one strip to the right of
-where you drew it.
+## Crit 10: who is a person
 
-The same record settles reconnection and identity without new machinery.
-Each event's id is the mark's row id, so a browser that reconnects sends
-`Last-Event-ID` and the server replays from SQLite: the database is the
-backlog. Identity stays judged rather than enforced, because an anonymous
-token is cleared by a private window and enforcing it would be theatre.
+Until this crit the app couldn't tell two visitors apart, and I'd argued
+that was a virtue: an anonymous token is cleared by a private window, so
+enforcing "one mark per person" is theatre. Re-reading that argument
+against the crit's bar showed it was about *enforcement*. Telling people
+apart for the record is a different job, and a browser token is honest
+enough for it, since the crit's incognito windows are exactly the case it
+treats as two people.
 
-The build followed in two commits. The API now takes strip-local
-coordinates and places each mark in whichever strip is blank when it
-writes, with the count and the insert in one synchronous block; `/api/stream`
-sends each mark as it lands ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)). New specs check that two
-concurrent marks at the same strip both land, one strip apart, that a mark
-reaches an open stream within a second, and that a reconnect replays what
-it missed. The client draws incoming marks, grows
-the paper and moves the blank strip without a reload ([`84a26f4`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/84a26f4)).
+Again the decision came first ([`7b8c401`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7b8c401)), as
+`decisions/0002-a-person-is-a-browser.md`. A person is a browser: an
+`HttpOnly` cookie holding a random token, of which the server keeps only a
+hash. What each may see: every mark, plus which ones are their own, shown
+as a small red seal, the painter's signature on a scroll, that nobody else
+sees. What each may change: nothing, their own marks included. I rejected
+typed pseudonyms (a form between the visitor and the brush) and names
+under every mark (it turns the record of what happened into a list of
+contributors).
+
+The build ([`56c1c32`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/56c1c32)) puts the check where the
+data is. Middleware attaches a visitor to every request; the write path
+takes the owner from the cookie and ignores the body; `toPublic` turns the
+stored hash into `mine` for whoever is asking, on the page, the POST
+response and each stream. One logfmt line per view, stream open and close,
+mark and refusal gives `flyctl logs` the narration the crit needs. The new
+spec drives two cookie jars and checks each sees its own seal and not the
+other's, and that a forged cookie becomes a new visitor rather than anyone
+in particular. `CLAUDE.md` gained the rules: no identity from the body,
+no hash in a response, and a log line for every new kind of action.
 
 ## How I directed the work
 
-I designed the interaction (a variable-width brush from real pointer
-speed, a scroll that grows one strip per mark, the enforced/judged split)
-and the API's validation rules. `CLAUDE.md` turns `README.md`'s argument
-into rules: never update or delete a mark, never refuse one for arriving
-second, never require an account, validate in the data layer rather than
-trusting `draw.ts`, one table on one volume, and a new record in
-`decisions/` before any change to multi-user behaviour. A rule that
-doesn't trace back to `README.md` doesn't belong in either file.
+I designed the interaction (a brush whose width follows pointer speed, a
+scroll that grows one strip per mark, the enforced/judged split) and the
+validation rules. `CLAUDE.md` turns `README.md`'s argument into rules, and
+a rule that doesn't trace back to `README.md` doesn't belong in either.
 
 ## How I grounded and corrected it
 
-A green `pnpm check` was never proof. Every change ran against CI's container and in a real browser with real pointer and
-keyboard input.
+A green `pnpm check` was never proof. Every change ran against CI's
+container and in a real browser with real pointer and keyboard input. For
+crit 10 that meant two isolated browser sessions: a mark drawn with Enter
+in one appeared live in the other, sealed only in the first, and the log
+named the right visitor. I also started the build against a database in
+the pre-crit-10 shape, as the live volume is, to check the migration keeps
+every old mark.
 
-That caught this crit's bug. With two tabs open I started a drag, had
-another mark land mid-stroke, then finished it. The rest of my stroke
-pinned itself to the strip's right edge: the page's auto-follow had
-scrolled the canvas to the new end under my pointer. The fix holds
-both the strip and the scroll position still while a mark is in progress
-and catches up on release, and the same repro now places it as drawn.
+Corrections, each a claim checked against behaviour, the fix landing in
+the data layer or `spec/` where it could:
 
-Other corrections, each a claim checked against behaviour:
-
-- a single tap saved but rendered nothing, because `M x y` alone has no
-  paintable geometry; the fix went into the data layer with a spec case
-  ([`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659))
-- "never erased" had silently excluded overpainting: pointer capture let
-  an over-long drag sweep across earlier marks, so the server now bounds
-  every point, halo included ([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf))
-- keyboard drawing looked fixed but the parent `<svg role="img">` hid the
-  zone from assistive tech ([`fbb528d`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/fbb528d))
-- axe reported no violations while two elements sat under 3:1, which I
-  found by computing the ratios by hand ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac), [`7e2939a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/7e2939a))
-- a second touch's release threw inside an async handler and dropped the
-  real mark ([`75bc2b5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/75bc2b5)); jsdom has no `createSVGPoint` or pointer
-  capture, so a two-pointer browser repro is the verification, not a spec.
-- after a forced machine stop, each reconnection to the deployed stream
-  took 20 seconds to open: nothing
-  flushed the headers before the first heartbeat. The "within a second"
-  spec had been passing by luck because test files raced on one database
+- a tap saved but rendered nothing, since `M x y` alone has no paintable
+  geometry ([`0a10659`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/0a10659))
+- "never erased" had silently excluded overpainting: pointer capture let a
+  long drag sweep across earlier marks, so the server now bounds every
+  point, halo included ([`3a57fdf`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/3a57fdf))
+- axe reported no violations while two elements sat under 3:1, found by
+  computing the ratios by hand ([`874ccac`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/874ccac))
+- the deployed stream took 20 seconds to open, and the "within a second"
+  spec had passed by luck because test files raced on one database
   ([`a058c5a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a058c5a), [`8c8f29e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8c8f29e))
 - the ADR's "a dropped connection misses nothing" held on the server but
-  not the page, which skipped any id below the highest it had drawn. Your
-  own POST response can beat someone's earlier mark on the stream, and
-  that mark vanished. It now remembers each id ([`a1cc5f2`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a1cc5f2))
-- the browser reconnects on its own, but not after an error reply: one
-  502 while a deploy swaps the machine closed the page's stream for good,
-  found by serving a 503 between stop and start. The page now reopens it
-  with backoff ([`632f838`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/632f838))
+  not the page, which skipped any id below the highest it had drawn
+  ([`a1cc5f2`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/a1cc5f2))
+- one 502 while a deploy swaps the machine closed the page's stream for
+  good; it now reopens with backoff ([`632f838`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/632f838))
 
 ## What's still open
 
-Presence is deliberately absent: arriving marks are the presence. The in-process bus holds only while Fly runs one
-machine.
+Presence is deliberately absent: arriving marks are the presence. The
+in-process bus holds only while Fly runs one machine. The logs go to
+stdout and Fly keeps them only briefly; if the app needs a longer memory
+than that, the database already is one.
