@@ -22,20 +22,44 @@ db.exec(`
   )
 `);
 
+// Who drew each mark, as the hash of their visitor token
+// (decisions/0002-a-person-is-a-browser.md). Added in crit 10, so marks
+// from before it have none.
+const columns = db.prepare("PRAGMA table_info(strokes)").all() as { name: string }[];
+if (!columns.some((c) => c.name === "visitor")) {
+  db.exec("ALTER TABLE strokes ADD COLUMN visitor TEXT");
+}
+
 export interface Stroke {
   id: number;
   d: string;
   width: number;
   createdAt: number;
+  // The drawer's visitor hash. Never sent to a browser: toPublic() turns it
+  // into `mine`, decided for whoever is asking.
+  visitor: string | null;
 }
 
-const insertStmt = db.prepare("INSERT INTO strokes (d, width, created_at) VALUES (?, ?, ?)");
+export interface PublicStroke {
+  id: number;
+  d: string;
+  width: number;
+  createdAt: number;
+  mine: boolean;
+}
+
+export function toPublic(stroke: Stroke, viewer: string): PublicStroke {
+  const { visitor, ...rest } = stroke;
+  return { ...rest, mine: visitor !== null && visitor === viewer };
+}
+
+const insertStmt = db.prepare("INSERT INTO strokes (d, width, created_at, visitor) VALUES (?, ?, ?, ?)");
 const countStmt = db.prepare("SELECT COUNT(*) AS n FROM strokes");
 const selectAllStmt = db.prepare(
-  "SELECT id, d, width, created_at AS createdAt FROM strokes ORDER BY id ASC",
+  "SELECT id, d, width, created_at AS createdAt, visitor FROM strokes ORDER BY id ASC",
 );
 const selectAfterStmt = db.prepare(
-  "SELECT id, d, width, created_at AS createdAt FROM strokes WHERE id > ? ORDER BY id ASC",
+  "SELECT id, d, width, created_at AS createdAt, visitor FROM strokes WHERE id > ? ORDER BY id ASC",
 );
 
 // A generous cap, not a design constraint: it exists only so one request
@@ -62,10 +86,10 @@ export function getStrokesAfter(id: number): Stroke[] {
 // actually be held regardless of what any future client sends.
 const BARE_MOVETO = /^M\s+([+-]?[\d.]+)\s+([+-]?[\d.]+)\s*$/;
 
-export function addStroke(d: string, width: number): Stroke {
+export function addStroke(d: string, width: number, visitor: string): Stroke {
   const bare = d.match(BARE_MOVETO);
   const safeD = bare ? `${d} L ${bare[1]} ${bare[2]}` : d;
   const createdAt = Date.now();
-  const info = insertStmt.run(safeD, width, createdAt);
-  return { id: Number(info.lastInsertRowid), d: safeD, width, createdAt };
+  const info = insertStmt.run(safeD, width, createdAt, visitor);
+  return { id: Number(info.lastInsertRowid), d: safeD, width, createdAt, visitor };
 }

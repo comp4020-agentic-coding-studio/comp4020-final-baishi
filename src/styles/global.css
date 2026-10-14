@@ -9,6 +9,8 @@
      for normal text, and dimming it further via opacity (as the old
      .tagline rule did) made it worse. A dedicated, darker link colour. */
   --link: #754c2c;
+  /* A painter's seal: vermilion, the one colour on the scroll that isn't ink. */
+  --seal: #b5321f;
 }
 
 * {
@@ -131,6 +133,16 @@ h1 {
   opacity: 0.75;
 }
 
+.seal {
+  fill: var(--seal);
+  opacity: 0.85;
+}
+
+.you {
+  margin: 0.5rem 0 0;
+  color: var(--ink-muted);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --paper: #232019;
@@ -142,5 +154,6 @@ h1 {
     /* --accent already clears 8.3:1 against dark paper-edge, so the link
        can reuse it directly rather than needing its own dark-mode shade. */
     --link: #d8a56a;
+    --seal: #e0563f;
   }
 }

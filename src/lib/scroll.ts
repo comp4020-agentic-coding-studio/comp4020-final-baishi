@@ -5,12 +5,15 @@
 // own POST response can beat someone else's earlier mark on the stream — so
 // the page remembers each id it drew, not just the highest.
 
-import { HEIGHT, SEGMENT, SOFT_SPREAD, totalWidth, zoneStart } from "./layout";
+import { HEIGHT, SEAL_SIZE, SEGMENT, SOFT_SPREAD, sealAt, totalWidth, zoneStart } from "./layout";
 
 export interface StrokeData {
   id: number;
   d: string;
   width: number;
+  // Decided by the server for whoever is asking: true only on the page of
+  // the visitor who drew it.
+  mine?: boolean;
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -32,9 +35,12 @@ export function createLiveScroll(root: Document): LiveScroll | null {
   const prompt = root.querySelector<SVGTextElement>("#zone-prompt");
   const zoneHit = root.querySelector<SVGRectElement>("#zone-hit");
   const status = root.querySelector<HTMLElement>("#status");
+  const you = root.querySelector<HTMLElement>("#you");
+  const youSeal = root.querySelector<HTMLElement>("#you-seal");
   if (!svg || !wrap || !paper || !outline || !prompt || !zoneHit || !status) return null;
 
   let count = Number(svg.dataset.count ?? 0);
+  let mine = Number(you?.dataset.mine ?? 0);
   // Everything up to the server-rendered last id is already on the page.
   const rendered = Number(svg.dataset.lastId ?? 0);
   const drawn = new Set<number>();
@@ -89,6 +95,20 @@ export function createLiveScroll(root: Document): LiveScroll | null {
       path.setAttribute("class", cls);
       path.setAttribute("stroke-width", String(w));
       svg.insertBefore(path, outline);
+    }
+
+    if (stroke.mine) {
+      const { x, y } = sealAt(stroke.d);
+      const seal = root.createElementNS(SVG_NS, "rect");
+      for (const [k, v] of [["x", x], ["y", y], ["width", SEAL_SIZE], ["height", SEAL_SIZE]]) {
+        seal.setAttribute(String(k), String(v));
+      }
+      seal.setAttribute("class", "seal");
+      svg.insertBefore(seal, outline);
+      mine += 1;
+      if (youSeal) {
+        youSeal.textContent = `Your ${mine === 1 ? "mark carries" : `${mine} marks carry`} a small red seal that only you can see.`;
+      }
     }
 
     if (!held) moveZone();

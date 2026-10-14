@@ -1,9 +1,11 @@
 ---
 import "../styles/global.css";
-import { getAllStrokes } from "../lib/db";
-import { HEIGHT, SEGMENT, SOFT_SPREAD, totalWidth, zoneStart } from "../lib/layout";
+import { getAllStrokes, toPublic } from "../lib/db";
+import { HEIGHT, SEAL_SIZE, SEGMENT, SOFT_SPREAD, sealAt, totalWidth, zoneStart } from "../lib/layout";
 
-const strokes = getAllStrokes();
+const { visitor } = Astro.locals;
+const strokes = getAllStrokes().map((s) => toPublic(s, visitor.hash));
+const mine = strokes.filter((s) => s.mine).length;
 const count = strokes.length;
 const width = totalWidth(count);
 const zoneX = zoneStart(count);
@@ -54,6 +56,15 @@ const since =
           {
             strokes.map((s) => (
               <>
+                {s.mine && (
+                  <rect
+                    x={sealAt(s.d).x}
+                    y={sealAt(s.d).y}
+                    width={SEAL_SIZE}
+                    height={SEAL_SIZE}
+                    class="seal"
+                  />
+                )}
                 <path d={s.d} class="ink-soft" stroke-width={s.width * SOFT_SPREAD} />
                 <path d={s.d} class="ink" stroke-width={s.width} />
               </>
@@ -90,6 +101,15 @@ const since =
         {count === 0
           ? "Nobody has drawn yet. The blank strip at the right is where you go first."
           : `${count} mark${count === 1 ? "" : "s"} so far, since ${since}.`}
+      </p>
+      <p id="you" class="you" data-mine={mine}>
+        You're visitor <code>{visitor.label}</code> here.{" "}<span id="you-seal"
+          >{
+            mine === 0
+              ? "Marks you leave carry a small red seal that only you can see."
+              : `Your ${mine === 1 ? "mark carries" : `${mine} marks carry`} a small red seal that only you can see.`
+          }</span
+        >
       </p>
     </main>
 

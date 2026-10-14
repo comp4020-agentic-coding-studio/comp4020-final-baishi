@@ -31,3 +31,17 @@ export function localBounds(width: number): {
   const reach = (width * SOFT_SPREAD) / 2;
   return { minX: reach, maxX: SEGMENT - reach, minY: reach, maxY: HEIGHT - reach };
 }
+
+// The strip a saved mark sits in, read off its path's first x: marks are
+// stored already placed, so where it starts says which strip it's in.
+export function stripX(d: string): number {
+  const x = Number(d.trim().split(/\s+/)[1]);
+  return BASE_WIDTH + Math.floor((x - BASE_WIDTH) / SEGMENT) * SEGMENT;
+}
+
+// Your own marks carry a small seal in their strip's lower-right corner,
+// the way a painter signs a scroll (decisions/0002-a-person-is-a-browser.md).
+export const SEAL_SIZE = 14;
+export function sealAt(d: string): { x: number; y: number } {
+  return { x: stripX(d) + SEGMENT - SEAL_SIZE - 10, y: HEIGHT - SEAL_SIZE - 10 };
+}
