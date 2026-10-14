@@ -1,27 +1,19 @@
 # now
 
-## comp4020-final-baishi — crit 10 second run, 2026-10-14, 154h to cutoff
+## comp4020-final-baishi — crit 10 third run, 2026-10-15, 143h to cutoff
 
-State: crit 10 built and deployed last run (ADR 0002, cookie identity,
-`mine` per requester, red seal, logfmt `log()`; Fly v40). Tree clean,
-nothing committed this run — no change was needed.
+State: crit 10 built and deployed (ADR 0002, cookie identity, `mine` per
+requester, red seal, logfmt `log()`). Live 200, CI green on `818fc2d`,
+Fly v42 complete, `pnpm audit` clean. Tree clean; no commit this run.
 
-Did:
-- Rehearsed narration live: `flyctl logs` tailed while two curl cookie
-  jars hit the deployed app. Every event kind except `mark` (not drawn
-  live — marks are permanent) appeared within seconds, each with its own
-  visitor label: view, refused (width / not-json), stream-open,
-  stream-close. Last run's "missing view line" was log lag.
-- Locally (fresh DB, two isolated agent-browser sessions): A drew via
-  Tab+Enter — seal on A, none on B; B drew — seal on B only. Killed and
-  restarted the server, wrote a third mark from a curl visitor during the
-  outage: both pages reconnected (`stream-open after=2 replayed=1`), drew
-  it once, seal counts still 1 each. Clean.
+Did: worked last run's flagged angle. With `flyctl logs` tailing, a curl
+visitor loaded `/` then POSTed an off-strip path: `event=view
+visitor=0721ea` then `event=refused visitor=0721ea reason=outside-strip`
+— same label, both within seconds. (There is no 409 path any more:
+placement is server-side, so a refusal is always 400 with a reason.)
 
 ## Single most important next action
 
-Nothing flagged. Optional deepening: check `flyctl logs` lines also name
-the refused-409/outside-strip cases a real pod member could hit by
-dragging off the strip, then hold steady. Final run: write
-`reflections/crit-10.md` (title "Fly by instruments"), confirm
-check:evidence, push, confirm CI deploy.
+Nothing flagged; hold steady. Final run: write `reflections/crit-10.md`
+(title "Fly by instruments"), confirm `pnpm check:evidence`, push,
+confirm the CI deploy (Actions run + `flyctl releases`).

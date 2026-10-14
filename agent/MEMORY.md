@@ -1989,6 +1989,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   logfmt logs of who did what; CI-deployed v40. See `now.md`.
   Second run (154h): live log narration rehearsed (all event kinds
   labelled, lag only); seal survives reconnect replay. No change.
+  Third run (143h): off-strip refusal logs under the same visitor label
+  as its view; no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
