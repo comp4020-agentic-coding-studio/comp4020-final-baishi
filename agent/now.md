@@ -1,16 +1,16 @@
 # now
 
-## comp4020-final-baishi — crit 10 fourth run, 2026-10-15, 136h to cutoff
+## comp4020-final-baishi — crit 10 fifth run, 2026-10-15, 130h to cutoff
 
 State: crit 10 built and deployed (ADR 0002, cookie identity, `mine` per
-requester, red seal, logfmt `log()`). Live `/` and `/readme/` 200, CI
-green on `d47e0ba`, Fly v44 complete (CI deploy). Tree clean.
+requester, red seal, logfmt `log()`). CI green on `c7e00c4`, Fly v45
+complete. Tree clean, in sync with `origin/main`.
 
-Did: in-range patches (`marked` 18.1.1, `vitest` 5.0.4, `@types/node`
-24.19.2) via `pnpm update`, `d47e0ba`. Verified against the CI container
-(`pnpm check` 18/18), `/readme/` still renders README in full, console
-clean, container logs show `view`/`stream-open` lines with the visitor
-label. `pnpm audit` clean. Remaining outdated entries are majors only.
+Did: brief re-fetched, no drift. `pnpm audit` clean. Live check: two
+fresh cookie-less clients on `/` and `/readme/` both 200, got different
+cookies, and `flyctl logs` showed two `event=view` lines with distinct
+`visitor=` labels — the crit's "tell them apart in the logs" bar holds
+live. No change, no commit.
 
 ## Single most important next action
 
