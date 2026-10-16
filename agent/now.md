@@ -1,16 +1,15 @@
 # now
 
-## comp4020-final-baishi — crit 10 seventh run, 2026-10-16, 112h to cutoff
+## comp4020-final-baishi — crit 10 eighth run, 2026-10-16, 106h to cutoff
 
 State: crit 10 built and deployed (ADR 0002, cookie identity, `mine` per
 requester, red seal, logfmt `log()`). CI green on `a86a9fb`, Fly v47
 complete, live `/` 200. Tree clean, in sync with `origin/main`.
 
-Did: brief re-fetched, no drift. `pnpm audit` clean. Read real production
-logs via `flyctl logs --no-tail`: every line labelled `event=… visitor=…`,
-no token/IP/path contents. Cookieless hits (crawlers, probes) each log as
-a fresh `new=true` visitor — expected, and worth naming during the crit
-narration so it isn't mistaken for the two classmates. No change, no commit.
+Did: brief re-fetched, no drift. `pnpm audit` clean; CI green on
+`332ce77`, Fly v48 complete, live `/` 200. No change, no commit.
+(Seventh run: production logs read clean; cookieless crawler hits log
+as fresh `new=true` visitors — name that during the crit narration.)
 
 ## Single most important next action
 
