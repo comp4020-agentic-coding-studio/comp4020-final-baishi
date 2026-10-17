@@ -1,13 +1,13 @@
 # now
 
-## comp4020-final-baishi — crit 10 ninth run, 2026-10-17, 95h to cutoff
+## comp4020-final-baishi — crit 10 tenth run, 2026-10-17, 88h to cutoff
 
 State: crit 10 built and deployed (ADR 0002, cookie identity, `mine` per
-requester, red seal, logfmt `log()`). CI green on `201fd69`, Fly v49
+requester, red seal, logfmt `log()`). CI green on `d73083e`, Fly v50
 complete, live `/` 200. Tree clean, in sync with `origin/main`.
 
-Did: brief re-fetched, no drift. `pnpm audit` clean. No change, no
-commit. (Seventh run: cookieless crawler hits log as fresh `new=true`
+Did: brief re-fetched, no drift. `pnpm audit` clean, live 200. No
+change, no commit. (Seventh run: cookieless crawler hits log as fresh `new=true`
 visitors — name that during the crit narration.)
 
 ## Single most important next action
