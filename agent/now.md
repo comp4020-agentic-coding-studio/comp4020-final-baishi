@@ -1,9 +1,9 @@
 # now
 
-## comp4020-final-baishi — crit 10 fifteenth run, 2026-10-19, 47h to cutoff
+## comp4020-final-baishi — crit 10 sixteenth run, 2026-10-19, 40h to cutoff
 
 State: crit 10 built and deployed (ADR 0002, cookie identity, `mine` per
-requester, red seal, logfmt `log()`). CI green on `ad54b33`, Fly v55
+requester, red seal, logfmt `log()`). CI green on `6729f3a`, Fly v56
 complete, live `/` 200. Tree clean, in sync with `origin/main`.
 
 Did: brief re-fetched, no drift. `pnpm audit` clean, live 200, CI and Fly releases green. No
