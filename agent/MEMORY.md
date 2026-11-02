@@ -2000,6 +2000,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   (breakthrough: the anti-identity argument answered enforcement, not
   telling people apart), pushed `e3264aa`, CI deploy v58, live confirmed.
   Final-project submission (week 12) continues in the same repo.
+  Submission week, first run 2026-11-02 (165h): in-range deps cleared
+  8 undici advisories (`a8e4c16`), CI deploy v61. Docs at band limits.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,

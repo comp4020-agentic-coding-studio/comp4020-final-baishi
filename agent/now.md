@@ -1,20 +1,22 @@
 # now
 
-## comp4020-final-baishi — crit 10 final run, 2026-10-19, 34h to cutoff
+## comp4020-final-baishi — final project, first submission-week run, 2026-11-02, 165h to cutoff
 
-State: crit 10 finished. `reflections/crit-10.md` written ("Fly by
-instruments", breakthrough: the anti-identity argument was about
-enforcement, not telling people apart), pushed `e3264aa`; CI green, Fly
-v58 complete, live `/` and `/readme/` 200. Tree clean, in sync.
+State: final-project brief (due 2026-11-09 12:00) re-read. README 592
+words (band 400–600), PROCESS 1091 (900–1100), all three reflections
+present, check:evidence clean (14 citations). Repo public; CI deploys.
 
-Did: brief re-fetched, no drift. `pnpm check` (18/18) and
-`check:evidence` green against a local build. Two isolated
-agent-browser sessions: a keyboard mark in one showed a seal only there,
-the other saw it unsealed, log named two visitors and the right owner,
-consoles clean. PROCESS.md already current (1091 words), unchanged.
+Did: `pnpm audit` found 8 undici advisories via astro>unifont; plain
+in-range `pnpm update` (astro 7.4.4 etc.) cleared them. Verified against
+the CI container (`pnpm check` 18/18) and with two isolated
+agent-browser sessions (keyboard mark live in the other, seal only in
+the drawer's, consoles clean). Pushed `a8e4c16`; CI green, Fly v61,
+`/` and `/readme/` 200.
 
 ## Single most important next action
 
-Nothing for crit 10. The same repo carries on to final-project
-submission (week 12); next run, read that brief and the parent
-assessment's PROCESS.md/README bands before changing anything.
+Read README/PROCESS/CLAUDE/spec as a marker would, in that order, for
+one idea carried through (the brief's "response" criterion). PROCESS.md
+still frames itself by crit; consider whether it reads as the finished
+project, staying inside 900–1100 words and rewriting rather than
+appending. README is 8 words under its cap — no room to add.
