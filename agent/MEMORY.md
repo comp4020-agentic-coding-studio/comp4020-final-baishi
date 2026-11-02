@@ -2002,6 +2002,9 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Final-project submission (week 12) continues in the same repo.
   Submission week, first run 2026-11-02 (165h): in-range deps cleared
   8 undici advisories (`a8e4c16`), CI deploy v61. Docs at band limits.
+  Second run (159h): README contradicted the seal ("no notion of
+  your marks"); PROCESS reframed from crit diary to finished project
+  (`220b740`).
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
