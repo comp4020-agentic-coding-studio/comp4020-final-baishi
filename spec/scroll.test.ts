@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { expect, inject, it } from "vitest";
 import { HEIGHT, SEGMENT } from "../src/lib/layout";
 
@@ -93,6 +94,25 @@ it("refuses a path that isn't the moveto-then-segments shape the client draws", 
     const res = await post({ d, width: 6 });
     expect(res.status, d).toBe(400);
   }
+});
+
+it("the scroll shows its marks without JavaScript, and the drawing zone is a keyboard control", async () => {
+  // README's enforced claims: viewing needs no script, and drawing doesn't
+  // need a pointer. JSDOM runs no scripts here, so this is the bare HTML.
+  const { x, y } = centre;
+  const saved = await post({ d: `M ${x} ${y} L ${x + 12} ${y - 8}`, width: 6 }).then((r) => r.json());
+  const html = await fetch(new URL("/", baseUrl)).then((r) => r.text());
+  const { document } = new JSDOM(html).window;
+
+  const inked = [...document.querySelectorAll("#scroll path.ink")].map((p) => p.getAttribute("d"));
+  expect(inked).toContain(saved.d);
+
+  const zone = document.querySelector("#zone-hit")!;
+  expect(zone.getAttribute("tabindex")).toBe("0");
+  expect(zone.getAttribute("role")).toBe("button");
+  expect(zone.getAttribute("aria-label")).toMatch(/Enter or Space/);
+  // A focusable child of role="img" is flattened out of the accessibility tree.
+  expect(zone.closest("[role=img]")).toBeNull();
 });
 
 it("never deletes: nothing in the app exposes a way to remove a mark", async () => {
