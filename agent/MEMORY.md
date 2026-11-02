@@ -2005,6 +2005,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Second run (159h): README contradicted the seal ("no notion of
   your marks"); PROCESS reframed from crit diary to finished project
   (`220b740`).
+  Third run (148h): README's enforced claims checked against spec/;
+  no-JS render and keyboard zone had no test, added (`333f286`), v65.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
