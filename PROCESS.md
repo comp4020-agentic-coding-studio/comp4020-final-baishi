@@ -6,33 +6,33 @@ The final project brief fixes three requirements (multi-user, real-time,
 persists) and leaves what "good" means to me. I picked one small idea and
 built all of it rather than plan a large app and ship a fraction: **The
 Scroll**, a shared ink canvas that only ever grows, one mark per visit,
-none of them ever erased. The brief's reading list pointed away from its
-"median answer", a chat room with the nouns swapped. A drawing surface with
-a hard rule against editing is small, testable, and takes a position.
+none of them ever erased. A drawing surface with a hard rule against editing is small, testable,
+and takes a position; a chat room with the nouns swapped does not.
 `README.md` argues that position and cites what I read.
 
-Crit 8 asked for proof of life, crit 9 for real-time and one recorded
-decision about several people at once, and crit 10 for telling people
-apart, with the rules checked on the server and the logs saying who did
-what.
+Sloan's home-cooked meal and Hoyt's small web gave me the position:
+small is the design, not a stage on the way to something bigger. That
+rules out the usual answers to the brief's open questions (accounts,
+rooms, feeds) before any code, and every later decision answers
+to it.
 
 ## The stack, and what it costs
 
 **Astro in server mode, the Node adapter, `better-sqlite3` with no ORM**
 ([`b3e5356`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/b3e5356)). The app is two rendered pages, one write endpoint and
-now one stream. Server output means `/` reads the database on every
+one stream. Server output means `/` reads the database on every
 request, so the scroll renders with JavaScript off, and standalone mode is
 a single `node` process that fits a 256MB Fly machine. Drizzle was the
 obvious alternative, but one table needs no migration tool.
 
 For real-time I chose **server-sent events** over WebSockets. Updates only
 flow one way (marks out to every page); the one write is already a plain
-POST. SSE is an ordinary HTTP response and needs no library on either side. The bus is an in-process listener
-set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
+POST. SSE is plain HTTP and needs no library on either side. The bus is an in-process
+listener set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
 machine. A second machine would need a real broker, and `CLAUDE.md` says
 that's a decision to raise, not drift into.
 
-## Crit 9: the decision, before the code
+## Several people at once: the decision before the code
 
 Crit 8 left a stopgap: two visitors who loaded the page together saw the
 same blank strip, and whoever saved second got a 409 and lost their mark
@@ -48,12 +48,12 @@ reconnect replays from SQLite: the database is the backlog. The build
 placed marks by arrival ([`8186a62`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/8186a62)) and drew
 incoming marks without a reload ([`84a26f4`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-baishi/commit/84a26f4)).
 
-## Crit 10: who is a person
+## Telling people apart
 
-Until this crit the app couldn't tell two visitors apart, and I'd argued
+Until crit 10 the app couldn't tell two visitors apart, and I'd argued
 that was a virtue: an anonymous token is cleared by a private window, so
 enforcing "one mark per person" is theatre. Re-reading that argument
-against the crit's bar showed it was about *enforcement*. Telling people
+against that crit's bar showed it was about *enforcement*. Telling people
 apart for the record is a different job, and a browser token is honest
 enough for it, since the crit's incognito windows are exactly the case it
 treats as two people.
@@ -83,14 +83,15 @@ no hash in a response, and a log line for every new kind of action.
 
 I designed the interaction (a brush whose width follows pointer speed, a
 scroll that grows one strip per mark, the enforced/judged split) and the
-validation rules. `CLAUDE.md` turns `README.md`'s argument into rules, and
+validation rules. The agent works in short stateless runs, so the repo is
+its only memory: `CLAUDE.md` turns `README.md`'s argument into rules, and
 a rule that doesn't trace back to `README.md` doesn't belong in either.
 
 ## How I grounded and corrected it
 
 A green `pnpm check` was never proof. Every change ran against CI's
 container and in a real browser with real pointer and keyboard input. For
-crit 10 that meant two isolated browser sessions: a mark drawn with Enter
+identity that meant two isolated browser sessions: a mark drawn with Enter
 in one appeared live in the other, sealed only in the first, and the log
 named the right visitor. I also started the build against a database in
 the pre-crit-10 shape, as the live volume is, to check the migration keeps

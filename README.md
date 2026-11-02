@@ -18,9 +18,8 @@ look like:
   [_An app can be a home-cooked meal_](https://www.robinsloan.com/notes/home-cooked-app/)
   argues that software built for a small, specific, known use doesn't need
   the affordances — accounts, growth, retention — that software built to
-  scale needs. The Scroll has no login and no notion of "your" marks once
-  they're made, because nothing here is trying to bring you back for a
-  streak.
+  scale needs. The Scroll has no login, no profile and no streak; all it
+  remembers about you is which marks are yours.
 - Ben Hoyt's [_The small web is beautiful_](https://benhoyt.com/writings/the-small-web-is-beautiful/)
   argues for fewer moving parts as a virtue in itself, not just a
   constraint: one table, one process, one file on one volume. There's no
