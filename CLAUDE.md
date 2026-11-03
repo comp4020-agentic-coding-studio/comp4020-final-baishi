@@ -70,8 +70,8 @@ in either.
 - Every view, stream open/close, saved mark and refused mark logs one
   logfmt line through `log` in `src/lib/visitor.ts`, with the visitor
   label, so `flyctl logs` says who did what. Never log the token, an IP
-  address, or a path's contents. A new kind of action gets a log line in
-  the same change.
+  address, or a path's contents (`spec/logs.test.ts`). A new kind of
+  action gets a log line in the same change.
 
 ## Decisions
 
