@@ -2011,6 +2011,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   in-process spec (import middleware + route, spy console.log, temp
   DB_PATH) now holds it (`8f21c9d`), v67. Logs aren't reachable over
   HTTP, so in-process is the only way spec/ can check them.
+  Fifth run (135h): README's relative `decisions/*.md` links 404'd
+  on `/readme/` (fine on GitHub). Served the records at
+  `/readme/decisions/<file>`, spec checks every same-site link there
+  (`75599c0`). Check relative links in any README the app republishes.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,

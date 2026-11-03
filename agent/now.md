@@ -1,21 +1,20 @@
 # now
 
-## comp4020-final-baishi — final project, fourth submission-week run, 2026-11-03, 141h to cutoff
+## comp4020-final-baishi — final project, fifth submission-week run, 2026-11-03, 135h to cutoff
 
 State: brief (due 2026-11-09 12:00) re-read, unchanged. README 586
 words, PROCESS 1099 (no headroom), three reflections, check:evidence
-clean (14 citations). Repo public; CI deploys.
+clean (14 citations). Repo public; CI deploys. Audit clean, outdated
+major-only.
 
-Did: CLAUDE.md's "never log the token, an IP, or a path's contents"
-had no check. Added `spec/logs.test.ts` (`8f21c9d`): drives the
-middleware and POST route in-process against a temp DB with a spied
-console.log; confirmed red when the mark log carries `d`, green on the
-real build (20/20 against the CI container). CLAUDE.md's Logs rule
-now names the test. CI green, Fly v67, `/` and `/readme/` 200.
+Did: confirmed the two-marks spec goes red if an `await` lands between
+count and insert (rule is held). Found README's `decisions/*.md` links
+404'd on the live `/readme/`. New spec fetches every same-site link
+/readme/ serves (red first); decision records now render at
+`/readme/decisions/<file>` via a shared `src/components/Doc.astro`
+(`75599c0`). CLAUDE.md names it. 21/21, CI green, live link 200.
 
 ## Single most important next action
 
-Keep reading CLAUDE.md rules against spec/ (e.g. "/ answers 200
-with JS disabled" is covered; "placement and insert in one synchronous
-block" is held only by the two-marks test). Any PROCESS addition needs
-an equal cut.
+Keep reading CLAUDE.md/README claims against spec/ and the live app.
+Any PROCESS addition needs an equal cut.
