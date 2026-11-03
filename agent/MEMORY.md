@@ -2007,6 +2007,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   (`220b740`).
   Third run (148h): README's enforced claims checked against spec/;
   no-JS render and keyboard zone had no test, added (`333f286`), v65.
+  Fourth run (141h): CLAUDE.md's log-privacy rule had no test; an
+  in-process spec (import middleware + route, spy console.log, temp
+  DB_PATH) now holds it (`8f21c9d`), v67. Logs aren't reachable over
+  HTTP, so in-process is the only way spec/ can check them.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
