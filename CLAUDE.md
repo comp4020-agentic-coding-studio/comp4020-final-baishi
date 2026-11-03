@@ -39,7 +39,8 @@ in either.
   so Enter/Space works wherever a pointer does.
 - `/readme/` always serves the current `README.md` in full, headings
   intact — `spec/invariants.test.ts` checks this; don't special-case it
-  away.
+  away. Every same-site link it serves answers; the decision records it
+  links to are served at `/readme/decisions/` from `decisions/` itself.
 
 ## What a change must not break
 

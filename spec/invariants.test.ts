@@ -59,3 +59,20 @@ it("publishes README.md at /readme/", async () => {
     from = at + normalise(heading).length;
   }
 });
+
+// README.md links to repo files (the decision records) by relative path,
+// which works on GitHub but not on the app. Every link /readme/ serves that
+// stays on this site has to answer, so a visitor never lands on a 404.
+it("every same-site link on /readme/ answers", async () => {
+  const page = new URL("/readme/", baseUrl);
+  const html = await fetch(page).then((r) => r.text());
+  const hrefs = [...new JSDOM(html).window.document.querySelectorAll("a[href]")].map(
+    (a) => new URL(a.getAttribute("href") ?? "", page),
+  );
+  const local = hrefs.filter((u) => u.origin === page.origin);
+  expect(local.length).toBeGreaterThan(0);
+  for (const url of local) {
+    const res = await fetch(url);
+    expect(res.status, url.pathname).toBe(200);
+  }
+});
