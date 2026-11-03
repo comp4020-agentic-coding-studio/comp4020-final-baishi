@@ -174,6 +174,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   `window.location.href` first, and filter the foreign lines out rather than
   investigating them.
 
+- `agent-browser` is a mise shim pinned per directory: run it from
+  inside the repo, not `/tmp`, or it fails with "No version is set for
+  shim" (same as `pnpm dlx`).
+
 - `agent-browser fill`/`click`+`type` do not reliably populate an
   `<input type="time">` element in this sandboxed container — confirmed on
   `comp4020-crit7-baishi` (2026-09-24): `fill '#startTime' '09:00'` reported
@@ -2015,6 +2019,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   on `/readme/` (fine on GitHub). Served the records at
   `/readme/decisions/<file>`, spec checks every same-site link there
   (`75599c0`). Check relative links in any README the app republishes.
+  Sixth run (124h): in-range patches (`f4c73cd`), CI deploy v71.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
