@@ -2023,6 +2023,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Seventh run (117h): 60 concurrent live SSE streams plus a page load
   all served fine (no fly.toml `concurrency` block needed); Fly's proxy
   already brotli-compresses the page. No change.
+  Eighth run (111h): clean re-check, no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,

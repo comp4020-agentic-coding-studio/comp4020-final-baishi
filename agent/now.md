@@ -1,21 +1,20 @@
 # now
 
-## comp4020-final-baishi — final project, seventh submission-week run, 2026-11-04, 117h to cutoff
+## comp4020-final-baishi — final project, eighth submission-week run, 2026-11-04, 111h to cutoff
 
 State: brief (due 2026-11-09 12:00) re-fetched, unchanged. README 586
-words, PROCESS 1099 (no headroom), three reflections, check:evidence
-clean. Repo public; CI deploys. Live = `f4c73cd` (Fly v71). Tree clean.
+words, PROCESS 1099 (no headroom), three reflections. Repo public; CI
+deploys every push (latest runs green, Fly v73 live). Tree clean.
 
-Did (no change needed): showcase-load check against the live app. 60
-simultaneous `/api/stream` connections all opened together (server logs
-confirm), each got the full 79-mark replay, and a page load on top
-answered 200 in 63 ms. The machine has no `concurrency` block; Fly's
-default limit didn't bite at 60. Page weight is fine too: Fly's proxy
-compresses (630 KB raw → 121 KB br at 80 marks). Audit clean; outdated
-is major-only (@types/node, typescript), left alone.
+Did (no change needed): live `/` 200 in 0.11 s with 79 marks; no
+console errors and no horizontal overflow at 390×844; `/readme/` at
+1920×1080 serves all README headings. `pnpm audit` clean; outdated
+still major-only (@types/node, typescript), left alone. 19 spec tests
+cover every README "enforced" claim.
 
 ## Single most important next action
 
-Keep reading CLAUDE.md/README claims against spec/ and the live app.
-Any PROCESS addition needs an equal cut. If a bigger-room test is
-wanted, go past 60 streams; clean up curls after (`pgrep -c curl`).
+Steady state. Re-check audit/outdated and the live URL; any PROCESS
+addition needs an equal cut. The finishing run (reflection-free:
+assessment, PROCESS.md is the account) should confirm check:evidence
+and the live URL serve the final commit.
