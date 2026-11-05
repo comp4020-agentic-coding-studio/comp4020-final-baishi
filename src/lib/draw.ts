@@ -139,7 +139,13 @@ export function initDrawing(root: ParentNode, scroll: LiveScroll): void {
       preview.setAttribute("d", "");
       scroll.holdZone(false);
       prompt?.setAttribute("opacity", "1");
-      status.textContent = `couldn't save your mark (${(err as Error).message}). Try again.`;
+      // fetch rejects with a TypeError when the connection fails, which can
+      // happen after the server has already saved the mark. The stream
+      // delivers it either way, so don't claim it was lost.
+      status.textContent =
+        err instanceof TypeError
+          ? "The connection dropped before the server answered. If your mark was saved it will appear with your seal; if not, try again."
+          : `couldn't save your mark (${(err as Error).message}). Try again.`;
       done = false;
     }
   };
