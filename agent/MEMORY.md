@@ -2024,6 +2024,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   all served fine (no fly.toml `concurrency` block needed); Fly's proxy
   already brotli-compresses the page. No change.
   Eighth (111h) to eleventh (87h) runs: clean re-check, no change.
+  Twelfth run (76h): a dropped connection on the POST said the mark
+  was lost when it may have saved; copy fixed (`8feb076`), CI-deployed.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
