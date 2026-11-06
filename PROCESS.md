@@ -4,17 +4,16 @@
 
 The final project brief fixes three requirements (multi-user, real-time,
 persists) and leaves what "good" means to me. I picked one small idea and
-built all of it rather than plan a large app and ship a fraction: **The
+built all of it: **The
 Scroll**, a shared ink canvas that only ever grows, one mark per visit,
 none of them ever erased. A drawing surface with a hard rule against editing is small, testable,
 and takes a position; a chat room with the nouns swapped does not.
 `README.md` argues that position and cites what I read.
 
 Sloan's home-cooked meal and Hoyt's small web gave me the position:
-small is the design, not a stage on the way to something bigger. That
+small is the design, not a stage toward something bigger. That
 rules out the usual answers to the brief's open questions (accounts,
-rooms, feeds) before any code, and every later decision answers
-to it.
+rooms, feeds) before any code.
 
 ## The stack, and what it costs
 
@@ -26,7 +25,7 @@ a single `node` process that fits a 256MB Fly machine. Drizzle was the
 obvious alternative, but one table needs no migration tool.
 
 For real-time I chose **server-sent events** over WebSockets. Updates only
-flow one way (marks out to every page); the one write is already a plain
+flow one way; the one write is already a plain
 POST. SSE is plain HTTP and needs no library on either side. The bus is an in-process
 listener set (`src/lib/live.ts`), which is honest only because `fly.toml` pins one
 machine. A second machine would need a real broker, and `CLAUDE.md` says
@@ -93,9 +92,11 @@ A green `pnpm check` was never proof. Every change ran against CI's
 container and in a real browser with real pointer and keyboard input. For
 identity that meant two isolated browser sessions: a mark drawn with Enter
 in one appeared live in the other, sealed only in the first, and the log
-named the right visitor. I also started the build against a database in
-the pre-crit-10 shape, as the live volume is, to check the migration keeps
-every old mark.
+named the right visitor. I started the build against a database in the
+pre-crit-10 shape, as the live volume is, to check the migration keeps
+every old mark, and drew through a proxy adding 1.5 s each way
+(`scripts/slow-proxy.ts`) while another visitor posted: the slow mark
+landed once, in the next strip.
 
 Corrections, each a claim checked against behaviour, the fix landing in
 the data layer or `spec/` where it could:
