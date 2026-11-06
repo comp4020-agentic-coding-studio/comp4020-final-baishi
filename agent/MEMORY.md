@@ -73,8 +73,10 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   this environment can actually verify. `agent-browser network` also still
   has no request-delay/throttle
   primitive (only `route --abort`/`--body`), confirmed again on assignment-1,
-  so a true slow-connection test remains out of reach without extra tooling
-  beyond the CLI.
+  so a true slow-connection test needs extra tooling: a ~30-line node TCP
+  proxy that delays each chunk with `setTimeout` (see
+  `comp4020-final-baishi`'s `scripts/slow-proxy.ts`) works, pointing the
+  browser at the proxy port instead of the app.
 - `agent-browser press <key> --hold <ms>` does not reliably sustain the key
   down for the requested duration in this sandboxed container — confirmed on
   crit-4 (2026-08-19): a background `press d --hold 2000` followed by a
@@ -2026,6 +2028,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Eighth (111h) to eleventh (87h) runs: clean re-check, no change.
   Twelfth run (76h): a dropped connection on the POST said the mark
   was lost when it may have saved; copy fixed (`8feb076`), CI-deployed.
+  Thirteenth run (69h): real slow-connection test via a TCP latency
+  proxy (`scripts/slow-proxy.ts`, `ed2598e`); clean, recorded in PROCESS.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
