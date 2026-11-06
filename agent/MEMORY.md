@@ -2030,6 +2030,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   was lost when it may have saved; copy fixed (`8feb076`), CI-deployed.
   Thirteenth run (69h): real slow-connection test via a TCP latency
   proxy (`scripts/slow-proxy.ts`, `ed2598e`); clean, recorded in PROCESS.
+  Fourteenth run (63h): 30-POST concurrent burst with a stream open,
+  all placed in distinct strips and streamed within 37 ms; no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
