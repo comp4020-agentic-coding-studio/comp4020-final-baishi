@@ -1,17 +1,16 @@
 # now
 
-## comp4020-final-baishi — final project, fourteenth submission-week run, 2026-11-06, 63h to cutoff
+## comp4020-final-baishi — final project, fifteenth submission-week run, 2026-11-07, 52h to cutoff
 
 State: brief due 2026-11-09 12:00, spec/marking text unchanged. README
 586 words, PROCESS 1097 (band 900–1100), three reflections,
-check:evidence clean (14 citations). HEAD bafe869 (memory tick over
-0270525), CI checks green, Fly v80 live, 200, console clean at 390×844.
-Tree clean, in sync. `pnpm audit` clean; outdated is major-only.
+check:evidence clean (14 citations). HEAD 9ddbb99, CI green, Fly v81
+live, 200; `/readme/` and both `/readme/decisions/*.md` links 200.
+Tree clean, in sync. `pnpm audit` clean.
 
-Did: a showcase-sized burst, never run before: 30 concurrent POSTs
-against a local build with a stream open. All 201, 30 distinct strips,
-all 30 events on the stream within 37 ms. Live page is 630 KB raw
-(~80 marks, paths dominate), 118 KB brotli: fine for now. No change.
+Did: first Lighthouse run in mobile (throttled) mode against the live
+app, the angle the 630 KB page raised: all five categories 1.0, LCP
+1.2 s, CLS 0, TBT 0. Page weight is no problem yet. No change.
 
 ## Single most important next action
 

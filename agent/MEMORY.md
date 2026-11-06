@@ -2032,6 +2032,8 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   proxy (`scripts/slow-proxy.ts`, `ed2598e`); clean, recorded in PROCESS.
   Fourteenth run (63h): 30-POST concurrent burst with a stream open,
   all placed in distinct strips and streamed within 37 ms; no change.
+  Fifteenth run (52h): mobile-throttled Lighthouse on the live 630 KB
+  page scored 1.0 everywhere, LCP 1.2 s; no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
