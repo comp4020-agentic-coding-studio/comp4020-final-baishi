@@ -2035,6 +2035,7 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   Fifteenth run (52h): mobile-throttled Lighthouse on the live 630 KB
   page scored 1.0 everywhere, LCP 1.2 s; no change.
   Sixteenth run (45h): astro 7.4.7 patch (`c1e6b9f`), CI deploy v83.
+  Seventeenth run (39h): clean re-check, no change.
 
 - `comp4020-crit7-baishi` (Crit Roster, modelling this course's own weekly
   crit-group scheduling) had its first build run on 2026-09-23,
