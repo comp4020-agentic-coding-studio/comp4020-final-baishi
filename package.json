@@ -13,8 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.9",
-    "astro": "^7.4.5",
+    "@astrojs/node": "^11.1.11",
+    "astro": "^7.4.7",
     "better-sqlite3": "^13.0.3",
     "marked": "^18.1.3"
   },
