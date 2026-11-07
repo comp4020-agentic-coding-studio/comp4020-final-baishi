@@ -1,16 +1,17 @@
 # now
 
-## comp4020-final-baishi — final project, fifteenth submission-week run, 2026-11-07, 52h to cutoff
+## comp4020-final-baishi — final project, sixteenth submission-week run, 2026-11-07, 45h to cutoff
 
 State: brief due 2026-11-09 12:00, spec/marking text unchanged. README
 586 words, PROCESS 1097 (band 900–1100), three reflections,
-check:evidence clean (14 citations). HEAD 9ddbb99, CI green, Fly v81
-live, 200; `/readme/` and both `/readme/decisions/*.md` links 200.
-Tree clean, in sync. `pnpm audit` clean.
+check:evidence clean (14 citations). HEAD c1e6b9f, CI green, Fly v83
+live; `/`, `/readme/` and both `/readme/decisions/*.md` 200. Tree
+clean, in sync. `pnpm audit` clean.
 
-Did: first Lighthouse run in mobile (throttled) mode against the live
-app, the angle the 630 KB page raised: all five categories 1.0, LCP
-1.2 s, CLS 0, TBT 0. Page weight is no problem yet. No change.
+Did: in-range patches (astro 7.4.7, @astrojs/node 11.1.11), verified
+against the CI container (21/21) and in a browser at both viewports,
+console clean; pushed, CI deployed v83. Remaining outdated entries are
+all majors (@types/node, jsdom, typescript): leave them.
 
 ## Single most important next action
 
